@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Posts on My New Hugo Site</title>
-    <link>http://localhost:1313/posts/</link>
-    <description>Recent content in Posts on My New Hugo Site</description>
+    <title>Posts on Lio&#39;s MLBlog</title>
+    <link>http://localhost:1313/mlblog/posts/</link>
+    <description>Recent content in Posts on Lio&#39;s MLBlog</description>
     <generator>Hugo -- 0.127.0</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 06 Jun 2024 14:27:08 +0200</lastBuildDate>
-    <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/mlblog/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Statistical Deep Learning 1 - MLE &amp; MAP</title>
-      <link>http://localhost:1313/posts/stat1_mlemap/</link>
+      <title>Statistical Inference 1 - MLE &amp; MAP</title>
+      <link>http://localhost:1313/mlblog/posts/stat1_mlemap/</link>
       <pubDate>Thu, 06 Jun 2024 14:27:08 +0200</pubDate>
-      <guid>http://localhost:1313/posts/stat1_mlemap/</guid>
-      <description>Introduction Maximum Likelihood Estimation (MLE) and Maximum a Posteriori (MAP) estimation are fundamental concepts in statistical inference.</description>
+      <guid>http://localhost:1313/mlblog/posts/stat1_mlemap/</guid>
+      <description>Introduction Maximum Likelihood Estimation (MLE) and Maximum a Posteriori (MAP) estimation are fundamental concepts in statistical inference and understanding these two is key to understanding the motivation behind the most frequently used loss functions like cross-entropy loss, mean-squared error (MSE or L2 loss) and mean absolute error (L1 loss).
+Assuming a probability distribution $p: \bm{\Omega} \rightarrow \mathbb{R},, p(\bm{x})$, independent samples $\bm{x}^{(1)}, \dots , \bm{x}^{(N)}$ and a set of parameters $\bm{\theta}$ on the domain $\bm{\Theta}$, generative modeling is occupied with fitting a parameterized distribution $p_{\bm{\theta}}(\bm{x})$ to the original data distribution $p(\bm{x})$, such that we can generate new samples $\bm{x}^{(N+i)}\sim p_{\bm{\theta}}(\bm{x}), i&amp;gt;0$ that look as if they came from $p(\bm{x})$.</description>
     </item>
   </channel>
 </rss>

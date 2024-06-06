@@ -1,4 +1,20 @@
-baseURL: https://example.org/
+baseURL: https://liopeer.github.io/mlblog/
 languageCode: en-us
 title: Lio's MLBlog
 theme: ["PaperMod"]
+markup:
+  goldmark:
+    extensions:
+      passthrough:
+        delimiters:
+          block:
+          - - \[
+            - \]
+          - - $$
+            - $$
+          inline:
+          - - \(
+            - \)
+        enable: true
+params:
+  math: true
