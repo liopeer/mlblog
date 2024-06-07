@@ -3,10 +3,16 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://localhost:1313/mlblog/</loc>
-    <lastmod>2024-06-06T14:54:32+02:00</lastmod>
+    <lastmod>2024-06-06T22:45:34+02:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/mlblog/posts/pinns_basicexample/</loc>
+    <lastmod>2024-06-06T22:45:34+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/mlblog/posts/</loc>
-    <lastmod>2024-06-06T14:54:32+02:00</lastmod>
+    <lastmod>2024-06-06T22:45:34+02:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/mlblog/posts/stat2_motivatingloss/</loc>
+    <lastmod>2024-06-06T19:37:42+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/mlblog/posts/stat1_mlemap/</loc>
     <lastmod>2024-06-06T14:27:08+02:00</lastmod>
