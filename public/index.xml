@@ -6,15 +6,33 @@
     <description>Recent content on Lio&#39;s MLBlog</description>
     <generator>Hugo -- 0.127.0</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 06 Jun 2024 14:27:08 +0200</lastBuildDate>
+    <lastBuildDate>Thu, 06 Jun 2024 22:45:34 +0200</lastBuildDate>
     <atom:link href="http://localhost:1313/mlblog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Physics-Informed Neural Networks - A Basic Example</title>
+      <link>http://localhost:1313/mlblog/posts/pinns_basicexample/</link>
+      <pubDate>Thu, 06 Jun 2024 22:45:34 +0200</pubDate>
+      <guid>http://localhost:1313/mlblog/posts/pinns_basicexample/</guid>
+      <description>Some text and then the notebook.
+Hello World </description>
+    </item>
+    <item>
+      <title>Statistical Inference 2 - Motivating Differentiable Loss Functions</title>
+      <link>http://localhost:1313/mlblog/posts/stat2_motivatingloss/</link>
+      <pubDate>Thu, 06 Jun 2024 19:37:42 +0200</pubDate>
+      <guid>http://localhost:1313/mlblog/posts/stat2_motivatingloss/</guid>
+      <description>Warning
+Incomplete!
+In the previous post, we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.
+Negative Log-Likelihood We start from the likelihood function that was introduced in the previous post $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta}) \end{equation} $$ and since we have been dealing under the assumption of having access to independent samples, the joint likelihood can be factorized as $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}^{(1)}, \dots, \bm{x}^{(N)}|\bm{\theta}) = \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta}).</description>
+    </item>
     <item>
       <title>Statistical Inference 1 - MLE &amp; MAP</title>
       <link>http://localhost:1313/mlblog/posts/stat1_mlemap/</link>
       <pubDate>Thu, 06 Jun 2024 14:27:08 +0200</pubDate>
       <guid>http://localhost:1313/mlblog/posts/stat1_mlemap/</guid>
-      <description>Introduction Maximum Likelihood Estimation (MLE) and Maximum a Posteriori (MAP) estimation are fundamental concepts in statistical inference and understanding these two is key to understanding the motivation behind the most frequently used loss functions like cross-entropy loss, mean-squared error (MSE or L2 loss) and mean absolute error (L1 loss).
-Assuming a probability distribution $p: \bm{\Omega} \rightarrow \mathbb{R},, p(\bm{x})$, independent samples $\bm{x}^{(1)}, \dots , \bm{x}^{(N)}$ and a set of parameters $\bm{\theta}$ on the domain $\bm{\Theta}$, generative modeling is occupied with fitting a parameterized distribution $p_{\bm{\theta}}(\bm{x})$ to the original data distribution $p(\bm{x})$, such that we can generate new samples $\bm{x}^{(N+i)}\sim p_{\bm{\theta}}(\bm{x}), i&amp;gt;0$ that look as if they came from $p(\bm{x})$.</description>
+      <description>Maximum Likelihood Estimation (MLE) and Maximum a Posteriori (MAP) estimation are fundamental concepts in statistical inference and understanding these two is key to understanding the motivation behind the most frequently used loss functions like cross-entropy loss, mean-squared error (MSE or L2 loss) and mean absolute error (L1 loss), which will be the topic of a later post.
+Introduction Assuming a probability distribution $p: \bm{\Omega} \rightarrow \mathbb{R},, p(\bm{x})$, independent samples $\bm{x}^{(1)}, \dots , \bm{x}^{(N)}$ and a set of parameters $\bm{\theta}$ on the domain $\bm{\Theta}$, we would like to fit a parameterized distribution $p_{\bm{\theta}}(\bm{x})$ to the original data distribution $p(\bm{x})$, possibly even in a way, such that we can generate new samples $\bm{x}^{(N+i)}\sim p_{\bm{\theta}}(\bm{x}), i&amp;gt;0$ that look as if they came from $p(\bm{x})$.</description>
     </item>
   </channel>
 </rss>
