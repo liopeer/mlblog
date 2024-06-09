@@ -5,11 +5,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="noindex, nofollow">
-<title>404 Page not found | Lio&#39;s MLBlog</title>
+<title>Physics-Informed Neural Networks - A Basic Example | Lio&#39;s MLBlog</title>
 <meta name="keywords" content="">
-<meta name="description" content="">
+<meta name="description" content="🗒️ Download (pinns_basicexample.ipynb)
+We would like to solve a (boundary value problem) BVP for the 1D heat equation $$ u_t(t,x) = u_{xx}(t, x), \quad t\in [0,T], \quad x\in [-1,1] $$ where the subscripts describe the first or second order partial derivatives. Together with this partial differential equation (PDE), we have boundary and initial conditions. $$ u(t,-1) = u(t,1) = 0\\ u(x,0) = -\sin(\pi x) $$ import numpy as np import matplotlib.">
 <meta name="author" content="">
-<link rel="canonical" href="http://localhost:1313/mlblog/404.html">
+<link rel="canonical" href="http://localhost:1313/mlblog/posts/pinns1_basicexample/">
 <link crossorigin="anonymous" href="/mlblog/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="http://localhost:1313/mlblog/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/mlblog/favicon-16x16.png">
@@ -18,7 +19,7 @@
 <link rel="mask-icon" href="http://localhost:1313/mlblog/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="en" href="http://localhost:1313/mlblog/404.html">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/mlblog/posts/pinns1_basicexample/">
 <noscript>
     <style>
         #theme-toggle,
@@ -76,7 +77,7 @@
     
 </head>
 
-<body class="list" id="top">
+<body class="" id="top">
 <script>
     if (localStorage.getItem("pref-theme") === "dark") {
         document.body.classList.add('dark');
@@ -125,7 +126,43 @@
     </nav>
 </header>
 <main class="main">
-<div class="not-found">404</div>
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Physics-Informed Neural Networks - A Basic Example
+    </h1>
+    <div class="post-meta"><span title='2024-06-06 22:45:34 +0200 CEST'>June 6, 2024</span>
+
+</div>
+  </header> 
+  <div class="post-content"><p><!-- raw HTML omitted -->🗒️ Download (pinns_basicexample.ipynb)<!-- raw HTML omitted --></p>
+<p>We would like to solve a (boundary value problem) BVP for the 1D heat equation
+</p>
+$$
+u_t(t,x) = u_{xx}(t, x), \quad t\in [0,T], \quad x\in [-1,1]
+$$
+<p>
+where the subscripts describe the first or second order partial derivatives. Together with this partial differential equation (PDE), we have boundary and initial conditions.
+</p>
+$$
+u(t,-1) = u(t,1) = 0\\
+u(x,0) = -\sin(\pi x)
+$$
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch.nn <span style="color:#66d9ef">as</span> nn
+</span></span></code></pre></div>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
     </main>
     
 <footer class="footer">

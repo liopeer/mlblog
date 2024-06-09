@@ -5,14 +5,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="noindex, nofollow">
-<title>Statistical Inference 2 - Motivating Differentiable Loss Functions | Lio&#39;s MLBlog</title>
+<title>Statistical Inference 1 - MLE &amp; MAP | Lio&#39;s MLBlog</title>
 <meta name="keywords" content="">
-<meta name="description" content="Warning
-Incomplete!
-In the previous post, we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.
-Negative Log-Likelihood We start from the likelihood function that was introduced in the previous post $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta}) \end{equation} $$ and since we have been dealing under the assumption of having access to independent samples, the joint likelihood can be factorized as $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}^{(1)}, \dots, \bm{x}^{(N)}|\bm{\theta}) = \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta}).">
+<meta name="description" content="Maximum Likelihood Estimation (MLE) and Maximum a Posteriori (MAP) estimation are fundamental concepts in statistical inference and understanding these two is key to understanding the motivation behind the most frequently used loss functions like cross-entropy loss, mean-squared error (MSE or L2 loss) and mean absolute error (L1 loss), which will be the topic of a later post.
+Introduction Assuming a probability distribution $p: \bm{\Omega} \rightarrow \mathbb{R},, p(\bm{x})$, independent samples $\bm{x}^{(1)}, \dots , \bm{x}^{(N)}$ and a set of parameters $\bm{\theta}$ on the domain $\bm{\Theta}$, we would like to fit a parameterized distribution $p_{\bm{\theta}}(\bm{x})$ to the original data distribution $p(\bm{x})$, possibly even in a way, such that we can generate new samples $\bm{x}^{(N&#43;i)}\sim p_{\bm{\theta}}(\bm{x}), i&gt;0$ that look as if they came from $p(\bm{x})$.">
 <meta name="author" content="">
-<link rel="canonical" href="http://localhost:1313/mlblog/posts/stat2_motivatingloss/">
+<link rel="canonical" href="http://localhost:1313/mlblog/posts/stat1_mlemap/stat1_mlemap/">
 <link crossorigin="anonymous" href="/mlblog/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="http://localhost:1313/mlblog/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/mlblog/favicon-16x16.png">
@@ -21,7 +19,7 @@ Negative Log-Likelihood We start from the likelihood function that was introduce
 <link rel="mask-icon" href="http://localhost:1313/mlblog/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="en" href="http://localhost:1313/mlblog/posts/stat2_motivatingloss/">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/mlblog/posts/stat1_mlemap/stat1_mlemap/">
 <noscript>
     <style>
         #theme-toggle,
@@ -133,13 +131,26 @@ Negative Log-Likelihood We start from the likelihood function that was introduce
   <header class="post-header">
     
     <h1 class="post-title entry-hint-parent">
-      Statistical Inference 2 - Motivating Differentiable Loss Functions
+      Statistical Inference 1 - MLE &amp; MAP
     </h1>
-    <div class="post-meta"><span title='2024-06-06 19:37:42 +0200 CEST'>June 6, 2024</span>
+    <div class="post-meta"><span title='2024-06-06 14:27:08 +0200 CEST'>June 6, 2024</span>
 
 </div>
   </header> 
-  <div class="post-content"><p><style type="text/css">
+  <div class="post-content"><p><em>Maximum Likelihood Estimation</em> (MLE) and <em>Maximum a Posteriori</em> (MAP) estimation are fundamental concepts in statistical inference and understanding these two is <em>key</em> to understanding the motivation behind the most frequently used loss functions like <em>cross-entropy loss</em>, <em>mean-squared error</em> (MSE or L2 loss) and <em>mean absolute error</em> (L1 loss), which will be the topic of a later post.</p>
+<h2 id="introduction">Introduction<a hidden class="anchor" aria-hidden="true" href="#introduction">#</a></h2>
+<p>Assuming a probability distribution $p: \bm{\Omega} \rightarrow \mathbb{R},, p(\bm{x})$, independent samples $\bm{x}^{(1)}, \dots , \bm{x}^{(N)}$ and a set of parameters $\bm{\theta}$ on the domain $\bm{\Theta}$, we would like to fit a parameterized distribution $p_{\bm{\theta}}(\bm{x})$ to the original data distribution $p(\bm{x})$, possibly even in a way, such that we can generate new samples $\bm{x}^{(N+i)}\sim p_{\bm{\theta}}(\bm{x}), i&gt;0$ that look as if they came from $p(\bm{x})$.</p>
+<p>For simple <em>probability densities</em> over $\bm{x}$, it might be sufficient to approximate $p(\bm{x})$ by simple parameterizations such as distributions from the exponential family<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> with suitable parameters $\bm{\theta}^\star$. These parameterizations ensure that $p_{\bm{\theta}}(\bm{x})$ is indeed a probability density and is easy to sample from:
+</p>
+$$
+\begin{align}
+    \int_{\bm{\Omega}}p_{\bm{\theta}}(\bm{x})d\bm{x} & = 1\\
+    p_{\bm{\theta}}(\bm{x}) &> 0,\quad \forall \bm{x}\in \bm{\Omega}
+\end{align}
+$$
+<p>
+For arbitrary distributions over $\bm{x}$ in high-dimensional $\bm{\Omega}$ however, one has to resort to more complicated parameterizations $p_{\bm{\theta}}$ and find appropriate $\bm{\theta}^\star$. Optimizing for such $\bm{\theta}^\star$ will be the main topic of this post.</p>
+<style type="text/css">
      
     .notice {
         --title-color: #fff;
@@ -253,101 +264,68 @@ Negative Log-Likelihood We start from the likelihood function that was introduce
         top: .125em;
         position: relative;
     }
-</style><div class="notice warning" >
+</style><div class="notice note" >
     <p class="notice-title">
         <span class="icon-notice baseline">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="126 76.5 300 300">
-  <path d="M297.431 324.397v-34.255c0-3.245-2.344-5.95-5.358-5.95h-32.146c-3.014 0-5.358 2.705-5.358 5.95v34.255c0 3.245 2.344 5.95 5.358 5.95h32.146c3.014 0 5.358-2.705 5.358-5.95Zm-.335-67.428 3.014-82.753c0-1.081-.502-2.524-1.674-3.425-1.005-.902-2.512-1.983-4.019-1.983h-36.834c-1.507 0-3.014 1.081-4.019 1.983-1.172.901-1.674 2.704-1.674 3.786l2.846 82.392c0 2.344 2.512 4.146 5.693 4.146h30.975c3.013 0 5.525-1.803 5.692-4.146Zm-2.344-168.39L423.34 342.425c3.683 7.032 3.516 15.686-.335 22.717-3.85 7.031-10.883 11.358-18.417 11.358H147.413c-7.534 0-14.566-4.327-18.417-11.358-3.85-7.031-4.018-15.685-.335-22.716L257.248 88.578C260.93 81.188 268.13 76.5 276 76.5c7.87 0 15.069 4.688 18.752 12.08Z"/>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 128 300 300">
+  <path d="M150 128c82.813 0 150 67.188 150 150 0 82.813-67.188 150-150 150C67.187 428 0 360.812 0 278c0-82.813 67.188-150 150-150Zm25 243.555v-37.11c0-3.515-2.734-6.445-6.055-6.445h-37.5c-3.515 0-6.445 2.93-6.445 6.445v37.11c0 3.515 2.93 6.445 6.445 6.445h37.5c3.32 0 6.055-2.93 6.055-6.445Zm-.39-67.188 3.515-121.289c0-1.367-.586-2.734-1.953-3.516-1.172-.976-2.93-1.562-4.688-1.562h-42.968c-1.758 0-3.516.586-4.688 1.563-1.367.78-1.953 2.148-1.953 3.515l3.32 121.29c0 2.734 2.93 4.882 6.64 4.882h36.134c3.515 0 6.445-2.148 6.64-4.883Z"/>
 </svg>
 
-        </span>Warning</p><p>Incomplete!</p></div>
+        </span>Note</p><p>For low-dimensional $\bm{x}$ and sufficient number of samples it is also possible to find a discretized approximation of $p(\bm{x})$ by binning the samples and dividing the bin counts by the total number of samples (this creates a Monte Carlo estimate of the density), which ensures property (1) and the equivalent of property (2) for <em>probability mass functions</em> and is also easy to sample from:
+</p>
+$$
+\begin{equation}
+    \sum_{\forall \bm{x} \in \bm{\Omega}} p(\bm{x}) = 1
+\end{equation}
+$$</div>
 
-In the <a href="/mlblog/posts/stat1_mlemap/">previous post</a>, we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.</p>
-<h2 id="negative-log-likelihood">Negative Log-Likelihood<a hidden class="anchor" aria-hidden="true" href="#negative-log-likelihood">#</a></h2>
-<p>We start from the likelihood function that was introduced in the previous post
+<h2 id="statistical-estimation">Statistical Estimation<a hidden class="anchor" aria-hidden="true" href="#statistical-estimation">#</a></h2>
+<p>In this section we will try fitting probability densities $p(\bm{x})$ to data. We want our model to be such that our samples would be very highly <em>likely</em> observed if we sampled from it. This means our distribution should assign high <em>likelihoods</em> to the observed samples and we can formulate the objective as
 </p>
 $$
 \begin{equation}
-\bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta})
+    \bm{\theta}^\star = \argmax_{\bm{\theta}} p_{\bm{\theta}}(\bm{x}) = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta}).
 \end{equation}
 $$
 <p>
-and since we have been dealing under the assumption of having access to independent samples, the joint likelihood can be factorized as
+For our fixed observations $\bm{x}$ and variable $\bm{\theta}$, $p(\bm{x}|\bm{\theta})$ is a function of the parameters and not of the data and is therefore usually referred to as the <em>likelihood</em> in Bayesian statistics, as opposed to a probability density. This method of estimating the optimal parameters draws its name from this function as <em>maximum likelihood estimation</em> (MLE). Existing knowledge on the distribution over $\bm{\theta}$ can be added by optimizing over the joint distribution $p(\bm{x},\bm{\theta})$, where the factorization introduces a <em>prior</em> $p(\bm{\theta})$
 </p>
 $$
 \begin{equation}
-    \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}^{(1)}, \dots, \bm{x}^{(N)}|\bm{\theta}) = \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta}).
+    \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x},\bm{\theta}) = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta}) p(\bm{\theta})
 \end{equation}
 $$
 <p>
-The logarithm is a montonically increasing function, therefore applying the $\log$ has no influence on the maximization operation and we can turn the product into a sum of likelihood terms for every observed sample
+Since our <em>evidence</em> $p(\bm{x})$ is constant, we can reformulate above optimization problem under Bayes&rsquo; theorem as
 </p>
 $$
 \begin{equation}
-    \bm{\theta}^\star = \argmax_{\bm{\theta}} \log \left( \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta}) \right) = \argmax_{\bm{\theta}} \sum_{i=1}^{N} \log p(\bm{x}^{(i)}|\bm{\theta}).
+    \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta}) p(\bm{\theta}) = \argmax_{\bm{\theta}} \frac{p(\bm{x}|\bm{\theta}) p(\bm{\theta})}{p(\bm{x})} = \argmax_{\bm{\theta}} p(\bm{\theta}|\bm{x})
 \end{equation}
 $$
 <p>
-It is convention to do minimization instead of maximization for most optimization problems, which can be done by inverting the sign, leading to the well known formulation of minimizing the <em>negative log-likelihood</em> (NLL).
+which means we are effectively maximizing the <em>posterior</em> and the maximization from Eq. (5) is therefore termed <em>maximum a posteriori</em> (MAP) estimation. While usually illustrated by utilizing optimization over the parameters of a statistical model, MLE and MAP are applicable over any joint distribution, as will later be demonstrated by introducing <em>latent variable models</em> and <em>inverse problems</em>.</p>
+<p><div class="notice note" >
+    <p class="notice-title">
+        <span class="icon-notice baseline">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 128 300 300">
+  <path d="M150 128c82.813 0 150 67.188 150 150 0 82.813-67.188 150-150 150C67.187 428 0 360.812 0 278c0-82.813 67.188-150 150-150Zm25 243.555v-37.11c0-3.515-2.734-6.445-6.055-6.445h-37.5c-3.515 0-6.445 2.93-6.445 6.445v37.11c0 3.515 2.93 6.445 6.445 6.445h37.5c3.32 0 6.055-2.93 6.055-6.445Zm-.39-67.188 3.515-121.289c0-1.367-.586-2.734-1.953-3.516-1.172-.976-2.93-1.562-4.688-1.562h-42.968c-1.758 0-3.516.586-4.688 1.563-1.367.78-1.953 2.148-1.953 3.515l3.32 121.29c0 2.734 2.93 4.882 6.64 4.882h36.134c3.515 0 6.445-2.148 6.64-4.883Z"/>
+</svg>
+
+        </span>Note</p><p>Realise that MLE is the same as MAP when considering a uniform prior $p(\bm{\theta}) = K, \forall \theta \in \Theta$, which has no influence under the maximization:
 </p>
 $$
 \begin{equation}
-    \bm{\theta}^\star = \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{x}^{(i)}|\bm{\theta})
+    \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta})p(\bm{\theta}) = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta})\cdot K = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta})
 \end{equation}
-$$
-<p>
-For very simple distributions, it is possible to derive a closed-form solution to the optimization problem by differentiating and finding stationary points, but usually optimization requires iterative optimization schemes with an appropriate differentiable loss function.</p>
-<h2 id="loss-functions">Loss Functions<a hidden class="anchor" aria-hidden="true" href="#loss-functions">#</a></h2>
-<p>For reasons of simplicity we will consider two cases from <em>supervised learning</em></p>
-<ol>
-<li>binary classification</li>
-<li>regression</li>
-</ol>
-<p>and w.l.o.g. we assume that $\bm{\theta}$ parameterizes a neural network $NN_\theta$ and that all our data points $\bm{x}^{(i)}$ can be split into components that belong to a <em>label</em> $\bm{y}^{(i)}$ and the complementary components $\bm{z}^{(i)}$, which will again be called <em>samples</em>. The training objective now is to infer the labels from the samples by optimizing our model.</p>
-<h3 id="regression">Regression<a hidden class="anchor" aria-hidden="true" href="#regression">#</a></h3>
-<p>Inserting the labels and samples yields
-</p>
-$$
-\begin{align}
-    \bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{x}^{(i)}|\bm{\theta}) = \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{y}^{(i)},\bm{z}^{(i)}|\bm{\theta})\\
-    &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{y}^{(i)}|\bm{z}^{(i)},\bm{\theta}) p(\bm{z}^{(i)}|\bm{\theta}).
-\end{align}
-$$
-<p>
-The usual assumption is that the observed data is slightly perturbed by some noise, either distributed normally around the true labels $p(\bm{y}^{(i)}|\bm{z}^{(i)}) \sim \mathcal{N}(\bm{y}^{(i)}, \bm{\Sigma}^2)$ or distributed according to a Laplacean $p(\bm{y}^{(i)}|\bm{z}^{(i)}) \sim \varphi (\bm{y}^{(i)}, \bm{\Sigma}^2)$. The prior on the samples $p(\bm{z}^{(i)})$ is usually assumed to be uniform, therefore that term is constant and drops out of the optimization. We will therefore similarly model our prediction model with the assumption of noisy predictions and uniform samples.
-</p>
-$$
-\begin{align}
-\bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{y}^{(i)}|\bm{z}^{(i)},\bm{\theta})
-\end{align}
-$$
-<h4 id="gaussian-noise">Gaussian Noise<a hidden class="anchor" aria-hidden="true" href="#gaussian-noise">#</a></h4>
-$$
-\begin{align}
-\bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log \mathcal{N}(\bm{y}^{(i)}; NN_\theta(\bm{x}^{(i)}),\bm{\Sigma}^2)\\
-&= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))^T (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))
-\end{align}
-$$
-<h4 id="laplacean-noise">Laplacean Noise<a hidden class="anchor" aria-hidden="true" href="#laplacean-noise">#</a></h4>
-$$
-\begin{align}
-\bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log \varphi(\bm{y}^{(i)}; NN_\theta(\bm{x}^{(i)}),\bm{\Sigma}^2)\\
-&= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} |\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)})|
-\end{align}
-$$
-<h3 id="classification">Classification<a hidden class="anchor" aria-hidden="true" href="#classification">#</a></h3>
-<p>For classifications tasks that assume a categorical prior on the targets <em>cross-entropy loss</em> is used, regression tasks usually rely on <em>mean-squared error</em> for Gaussian priors on the error or <em>mean absolute error</em> for Laplacean priors. In the case where $\bm{\theta}$ parameterizes a neural network, the iterative optimization is almost exclusively done by variations of stochastic gradient descent (SGD). <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> <sup id="fnref:3"><a href="#fn:3" class="footnote-ref" role="doc-noteref">3</a></sup></p>
+$$</div>
+
+The <a href="/mlblog/posts/stat2_motivatingloss/stat2_motivatingloss/">next post</a> will continue from the MLE and MAP formulations and motivate the commonly used loss functions.</p>
 <div class="footnotes" role="doc-endnotes">
 <hr>
 <ol>
 <li id="fn:1">
-<p>F. Rosenblatt. &ldquo;The perceptron: a probabilistic model for information storage and organization in the brain.&rdquo; in Psychological Review, vol. 65, pp. 386-408, 1958.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
-</li>
-<li id="fn:2">
-<p>Diederik P. Kingma, Jimmy Ba. &ldquo;Adam: A Method for Stochastic Optimization&rdquo;, 2017.&#160;<a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
-</li>
-<li id="fn:3">
-<p>Ilya Loshchilov, Frank Hutter. &ldquo;Decoupled Weight Decay Regularization&rdquo;, 2019.&#160;<a href="#fnref:3" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+<p>B. O. Koopman. &ldquo;On Distributions Admitting a Sufficient Statistic&rdquo; in Transactions of the American Mathematical Society, vol. 39, no. 3, pp. 399–409, 1936.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
 </li>
 </ol>
 </div>

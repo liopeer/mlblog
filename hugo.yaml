@@ -18,3 +18,23 @@ markup:
         enable: true
 params:
   math: true
+  homeInfoParams:
+  Title: "Hey, I’m Lionel"
+  Content: "Aspiring ML Engineer"
+
+  socialIcons:
+    - name: "linkedin"
+      url: "https://www.linkedin.com/in/lionel-peer"
+    - name: "github"
+      url: "https://github.com/liopeer/"
+
+  homeInfoParams:
+    Title: "Hi, I'm Lionel"
+    Content: "Aspiring ML Engineer, taking you along on my journey."
+
+menu:
+  main:
+    - identifier: blog
+      name: Blog
+      url: /posts/
+      weight: 10
