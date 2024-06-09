@@ -6,7 +6,7 @@ draft = false
 {{< notice warning >}}
 Incomplete!
 {{< /notice >}}
-In the [previous post]({{< relref "stat1_mlemap" >}}), we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.
+In the [previous post]({{< relref "../2024-06-07_stat1_mlemap/index.md" >}}), we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.
 
 ## Negative Log-Likelihood
 We start from the likelihood function that was introduced in the previous post
