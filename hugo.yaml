@@ -4,6 +4,8 @@ title: Lio's MLBlog
 theme: ["hugo-notice","PaperMod"]
 markup:
   goldmark:
+    renderer:
+      unsafe: true
     extensions:
       passthrough:
         delimiters:
