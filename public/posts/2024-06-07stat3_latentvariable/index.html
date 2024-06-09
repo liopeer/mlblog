@@ -5,14 +5,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="noindex, nofollow">
-<title>Statistical Inference 2 - Motivating Differentiable Loss Functions | Lio&#39;s MLBlog</title>
+<title>Statistical Inference 3 - Latent Variable Models | Lio&#39;s MLBlog</title>
 <meta name="keywords" content="">
 <meta name="description" content="Warning
-Incomplete!
-In the previous post, we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.
-Negative Log-Likelihood We start from the likelihood function that was introduced in the previous post $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta}) \end{equation} $$ and since we have been dealing under the assumption of having access to independent samples, the joint likelihood can be factorized as $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}^{(1)}, \dots, \bm{x}^{(N)}|\bm{\theta}) = \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta}).">
+Incomplete!">
 <meta name="author" content="">
-<link rel="canonical" href="http://localhost:1313/mlblog/posts/stat2_motivatingloss/">
+<link rel="canonical" href="http://localhost:1313/mlblog/posts/2024-06-07stat3_latentvariable/">
 <link crossorigin="anonymous" href="/mlblog/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="http://localhost:1313/mlblog/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/mlblog/favicon-16x16.png">
@@ -21,7 +19,7 @@ Negative Log-Likelihood We start from the likelihood function that was introduce
 <link rel="mask-icon" href="http://localhost:1313/mlblog/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="en" href="http://localhost:1313/mlblog/posts/stat2_motivatingloss/">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/mlblog/posts/2024-06-07stat3_latentvariable/">
 <noscript>
     <style>
         #theme-toggle,
@@ -133,13 +131,13 @@ Negative Log-Likelihood We start from the likelihood function that was introduce
   <header class="post-header">
     
     <h1 class="post-title entry-hint-parent">
-      Statistical Inference 2 - Motivating Differentiable Loss Functions
+      Statistical Inference 3 - Latent Variable Models
     </h1>
-    <div class="post-meta"><span title='2024-06-06 19:37:42 +0200 CEST'>June 6, 2024</span>
+    <div class="post-meta"><span title='2024-06-06 21:59:40 +0200 CEST'>June 6, 2024</span>
 
 </div>
   </header> 
-  <div class="post-content"><p><style type="text/css">
+  <div class="post-content"><style type="text/css">
      
     .notice {
         --title-color: #fff;
@@ -262,95 +260,6 @@ Negative Log-Likelihood We start from the likelihood function that was introduce
 
         </span>Warning</p><p>Incomplete!</p></div>
 
-In the <a href="/mlblog/posts/stat1_mlemap/">previous post</a>, we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.</p>
-<h2 id="negative-log-likelihood">Negative Log-Likelihood<a hidden class="anchor" aria-hidden="true" href="#negative-log-likelihood">#</a></h2>
-<p>We start from the likelihood function that was introduced in the previous post
-</p>
-$$
-\begin{equation}
-\bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta})
-\end{equation}
-$$
-<p>
-and since we have been dealing under the assumption of having access to independent samples, the joint likelihood can be factorized as
-</p>
-$$
-\begin{equation}
-    \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}^{(1)}, \dots, \bm{x}^{(N)}|\bm{\theta}) = \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta}).
-\end{equation}
-$$
-<p>
-The logarithm is a montonically increasing function, therefore applying the $\log$ has no influence on the maximization operation and we can turn the product into a sum of likelihood terms for every observed sample
-</p>
-$$
-\begin{equation}
-    \bm{\theta}^\star = \argmax_{\bm{\theta}} \log \left( \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta}) \right) = \argmax_{\bm{\theta}} \sum_{i=1}^{N} \log p(\bm{x}^{(i)}|\bm{\theta}).
-\end{equation}
-$$
-<p>
-It is convention to do minimization instead of maximization for most optimization problems, which can be done by inverting the sign, leading to the well known formulation of minimizing the <em>negative log-likelihood</em> (NLL).
-</p>
-$$
-\begin{equation}
-    \bm{\theta}^\star = \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{x}^{(i)}|\bm{\theta})
-\end{equation}
-$$
-<p>
-For very simple distributions, it is possible to derive a closed-form solution to the optimization problem by differentiating and finding stationary points, but usually optimization requires iterative optimization schemes with an appropriate differentiable loss function.</p>
-<h2 id="loss-functions">Loss Functions<a hidden class="anchor" aria-hidden="true" href="#loss-functions">#</a></h2>
-<p>For reasons of simplicity we will consider two cases from <em>supervised learning</em></p>
-<ol>
-<li>binary classification</li>
-<li>regression</li>
-</ol>
-<p>and w.l.o.g. we assume that $\bm{\theta}$ parameterizes a neural network $NN_\theta$ and that all our data points $\bm{x}^{(i)}$ can be split into components that belong to a <em>label</em> $\bm{y}^{(i)}$ and the complementary components $\bm{z}^{(i)}$, which will again be called <em>samples</em>. The training objective now is to infer the labels from the samples by optimizing our model.</p>
-<h3 id="regression">Regression<a hidden class="anchor" aria-hidden="true" href="#regression">#</a></h3>
-<p>Inserting the labels and samples yields
-</p>
-$$
-\begin{align}
-    \bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{x}^{(i)}|\bm{\theta}) = \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{y}^{(i)},\bm{z}^{(i)}|\bm{\theta})\\
-    &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{y}^{(i)}|\bm{z}^{(i)},\bm{\theta}) p(\bm{z}^{(i)}|\bm{\theta}).
-\end{align}
-$$
-<p>
-The usual assumption is that the observed data is slightly perturbed by some noise, either distributed normally around the true labels $p(\bm{y}^{(i)}|\bm{z}^{(i)}) \sim \mathcal{N}(\bm{y}^{(i)}, \bm{\Sigma}^2)$ or distributed according to a Laplacean $p(\bm{y}^{(i)}|\bm{z}^{(i)}) \sim \varphi (\bm{y}^{(i)}, \bm{\Sigma}^2)$. The prior on the samples $p(\bm{z}^{(i)})$ is usually assumed to be uniform, therefore that term is constant and drops out of the optimization. We will therefore similarly model our prediction model with the assumption of noisy predictions and uniform samples.
-</p>
-$$
-\begin{align}
-\bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{y}^{(i)}|\bm{z}^{(i)},\bm{\theta})
-\end{align}
-$$
-<h4 id="gaussian-noise">Gaussian Noise<a hidden class="anchor" aria-hidden="true" href="#gaussian-noise">#</a></h4>
-$$
-\begin{align}
-\bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log \mathcal{N}(\bm{y}^{(i)}; NN_\theta(\bm{x}^{(i)}),\bm{\Sigma}^2)\\
-&= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))^T (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))
-\end{align}
-$$
-<h4 id="laplacean-noise">Laplacean Noise<a hidden class="anchor" aria-hidden="true" href="#laplacean-noise">#</a></h4>
-$$
-\begin{align}
-\bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log \varphi(\bm{y}^{(i)}; NN_\theta(\bm{x}^{(i)}),\bm{\Sigma}^2)\\
-&= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} |\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)})|
-\end{align}
-$$
-<h3 id="classification">Classification<a hidden class="anchor" aria-hidden="true" href="#classification">#</a></h3>
-<p>For classifications tasks that assume a categorical prior on the targets <em>cross-entropy loss</em> is used, regression tasks usually rely on <em>mean-squared error</em> for Gaussian priors on the error or <em>mean absolute error</em> for Laplacean priors. In the case where $\bm{\theta}$ parameterizes a neural network, the iterative optimization is almost exclusively done by variations of stochastic gradient descent (SGD). <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> <sup id="fnref:3"><a href="#fn:3" class="footnote-ref" role="doc-noteref">3</a></sup></p>
-<div class="footnotes" role="doc-endnotes">
-<hr>
-<ol>
-<li id="fn:1">
-<p>F. Rosenblatt. &ldquo;The perceptron: a probabilistic model for information storage and organization in the brain.&rdquo; in Psychological Review, vol. 65, pp. 386-408, 1958.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
-</li>
-<li id="fn:2">
-<p>Diederik P. Kingma, Jimmy Ba. &ldquo;Adam: A Method for Stochastic Optimization&rdquo;, 2017.&#160;<a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
-</li>
-<li id="fn:3">
-<p>Ilya Loshchilov, Frank Hutter. &ldquo;Decoupled Weight Decay Regularization&rdquo;, 2019.&#160;<a href="#fnref:3" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
-</li>
-</ol>
-</div>
 
 
   </div>

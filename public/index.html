@@ -118,22 +118,71 @@
             </div>
         </div>
         <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/mlblog/posts/" title="Blog">
+                    <span>Blog</span>
+                </a>
+            </li>
         </ul>
     </nav>
 </header>
 <main class="main"> 
+<article class="first-entry home-info">
+    <header class="entry-header">
+        <h1>Hi, I&rsquo;m Lionel</h1>
+    </header>
+    <div class="entry-content">
+        Aspiring ML Engineer, taking you along on my journey.
+    </div>
+    <footer class="entry-footer">
+        <div class="social-icons" >
+    <a href="https://www.linkedin.com/in/lionel-peer" target="_blank" rel="noopener noreferrer me"
+        title="Linkedin">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg>
+    </a>
+    <a href="https://github.com/liopeer/" target="_blank" rel="noopener noreferrer me"
+        title="Github">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg>
+    </a>
+</div>
 
-<article class="first-entry"> 
+    </footer>
+</article>
+
+<article class="post-entry"> 
   <header class="entry-header">
     <h2 class="entry-hint-parent">Physics-Informed Neural Networks - A Basic Example
     </h2>
   </header>
   <div class="entry-content">
-    <p>Some text and then the notebook.
-Hello World </p>
+    <p>🗒️ Download (pinns_basicexample.ipynb)
+We would like to solve a (boundary value problem) BVP for the 1D heat equation $$ u_t(t,x) = u_{xx}(t, x), \quad t\in [0,T], \quad x\in [-1,1] $$ where the subscripts describe the first or second order partial derivatives. Together with this partial differential equation (PDE), we have boundary and initial conditions. $$ u(t,-1) = u(t,1) = 0\\ u(x,0) = -\sin(\pi x) $$ import numpy as np import matplotlib....</p>
   </div>
   <footer class="entry-footer"><span title='2024-06-06 22:45:34 +0200 CEST'>June 6, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to Physics-Informed Neural Networks - A Basic Example" href="http://localhost:1313/mlblog/posts/pinns_basicexample/"></a>
+  <a class="entry-link" aria-label="post link to Physics-Informed Neural Networks - A Basic Example" href="http://localhost:1313/mlblog/posts/2024-06-09_pinns1_basicexample/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Statistical Inference 3 - Latent Variable Models
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>Warning
+Incomplete!</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-06-06 21:59:40 +0200 CEST'>June 6, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to Statistical Inference 3 - Latent Variable Models" href="http://localhost:1313/mlblog/posts/2024-06-07stat3_latentvariable/"></a>
 </article>
 
 <article class="post-entry"> 
@@ -148,7 +197,7 @@ In the previous post, we formulated the optimization problem, but did not talk a
 Negative Log-Likelihood We start from the likelihood function that was introduced in the previous post $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}|\bm{\theta}) \end{equation} $$ and since we have been dealing under the assumption of having access to independent samples, the joint likelihood can be factorized as $$ \begin{equation} \bm{\theta}^\star = \argmax_{\bm{\theta}} p(\bm{x}^{(1)}, \dots, \bm{x}^{(N)}|\bm{\theta}) = \prod_{i=1}^{N} p(\bm{x}^{(i)}|\bm{\theta})....</p>
   </div>
   <footer class="entry-footer"><span title='2024-06-06 19:37:42 +0200 CEST'>June 6, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to Statistical Inference 2 - Motivating Differentiable Loss Functions" href="http://localhost:1313/mlblog/posts/stat2_motivatingloss/"></a>
+  <a class="entry-link" aria-label="post link to Statistical Inference 2 - Motivating Differentiable Loss Functions" href="http://localhost:1313/mlblog/posts/2024-06-07_stat2_motivatingloss/"></a>
 </article>
 
 <article class="post-entry"> 
@@ -161,7 +210,7 @@ Negative Log-Likelihood We start from the likelihood function that was introduce
 Introduction Assuming a probability distribution $p: \bm{\Omega} \rightarrow \mathbb{R},, p(\bm{x})$, independent samples $\bm{x}^{(1)}, \dots , \bm{x}^{(N)}$ and a set of parameters $\bm{\theta}$ on the domain $\bm{\Theta}$, we would like to fit a parameterized distribution $p_{\bm{\theta}}(\bm{x})$ to the original data distribution $p(\bm{x})$, possibly even in a way, such that we can generate new samples $\bm{x}^{(N&#43;i)}\sim p_{\bm{\theta}}(\bm{x}), i&gt;0$ that look as if they came from $p(\bm{x})$....</p>
   </div>
   <footer class="entry-footer"><span title='2024-06-06 14:27:08 +0200 CEST'>June 6, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to Statistical Inference 1 - MLE &amp; MAP" href="http://localhost:1313/mlblog/posts/stat1_mlemap/"></a>
+  <a class="entry-link" aria-label="post link to Statistical Inference 1 - MLE &amp; MAP" href="http://localhost:1313/mlblog/posts/2024-06-07_stat1_mlemap/"></a>
 </article>
     </main>
     
