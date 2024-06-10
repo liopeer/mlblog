@@ -19,6 +19,9 @@ markup:
             - \)
         enable: true
 params:
+  custom_css: ["css/custom.css"]
+  ShowToc: true
+  show_citation: true
   math: true
   homeInfoParams:
   Title: "Hey, I’m Lionel"

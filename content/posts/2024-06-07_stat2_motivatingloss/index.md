@@ -1,10 +1,11 @@
 +++
 title = 'Statistical Inference 2 - Motivating Differentiable Loss Functions'
+author = 'Lionel Peer'
 date = 2024-06-06T19:37:42+02:00
 draft = false
 +++
 {{< notice warning >}}
-Incomplete!
+Not 100% complete yet!
 {{< /notice >}}
 In the [previous post]({{< relref "../2024-06-07_stat1_mlemap/index.md" >}}), we formulated the optimization problem, but did not talk about actually solving it. This second post introduces a case where the solution can be found analytically and shows the motivation behind the ubiquitous loss functions used in machine learning.
 
@@ -56,20 +57,39 @@ $$
 \bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log p(\bm{y}^{(i)}|\bm{z}^{(i)},\bm{\theta})
 \end{align}
 $$
+As illustrated in below plot, these assumptions are reasonable in many regression tasks:
+1. $z$ is uniformly sampled in the interval $[-6,6]$
+2. $y$ is a superposition of two sine waves with additive noise when observed
+{{% ipynb notebook="label_noise.ipynb" %}}
 #### Gaussian Noise
 $$
+\begin{equation}
+\bm{\theta}^\star = \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log \mathcal{N}(\bm{y}^{(i)}; NN_\theta(\bm{x}^{(i)}),\bm{\Sigma}^2)
+\end{equation}
+$$
+and with the multivariate normal distribution, as follows (assuming a diagonal covariance matrix)
+$$
+\begin{equation}
+\mathcal{N}(\bm{x}; \bm{\mu}, \bm{\Sigma}) = (2\pi)^{-k/2} \det(\bm{\Sigma})^{-1/2} \exp \left( -\frac{1}{2}(\bm{x}-\bm{\mu}^T)\bm{\Sigma}^{-1} (\bm{x}-\bm{\mu}) \right)\\
+\end{equation}
+$$
+it is straightforward to show that
+$$
 \begin{align}
-\bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log \mathcal{N}(\bm{y}^{(i)}; NN_\theta(\bm{x}^{(i)}),\bm{\Sigma}^2)\\
-&= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))^T (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))
+\bm{\theta}^\star &= \argmin_{\bm{\theta}} \sum_{i=1}^{N} (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))^T (\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)}))\\
+&= \argmin_{\bm{\theta}} \sum_{i=1}^{N} ||\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)})||^2
 \end{align}
 $$
-#### Laplacean Noise
+which is the well-known MSE loss. **We can therefore conclude that the MSE loss is the log-likelihood under the assumption of i.i.d Gaussian noise on the labels.**
+#### Laplace Noise
+The same approach can be taken, leading to the L1 loss
 $$
 \begin{align}
 \bm{\theta}^\star &= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} \log \varphi(\bm{y}^{(i)}; NN_\theta(\bm{x}^{(i)}),\bm{\Sigma}^2)\\
-&= \argmin_{\bm{\theta}} - \sum_{i=1}^{N} |\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)})|
+&= \argmin_{\bm{\theta}} \sum_{i=1}^{N} |\bm{y}^{(i)} - NN_\theta(\bm{x}^{(i)})|.
 \end{align}
 $$
+Here as well, **we can conclude that the L1 loss maximizes the likelihood of our data assuming a noise distributed according to i.i.d. Laplace distribution.**
 ### Classification
 
 For classifications tasks that assume a categorical prior on the targets *cross-entropy loss* is used, regression tasks usually rely on *mean-squared error* for Gaussian priors on the error or *mean absolute error* for Laplacean priors. In the case where $\bm{\theta}$ parameterizes a neural network, the iterative optimization is almost exclusively done by variations of stochastic gradient descent (SGD). [^2] [^3] [^4]
