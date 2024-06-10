@@ -1,5 +1,6 @@
 +++
 title = 'Statistical Inference 1 - MLE & MAP'
+author = 'Lionel Peer'
 date = 2024-06-06T14:27:08+02:00
 draft = false
 +++
