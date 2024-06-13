@@ -1,6 +1,7 @@
 baseURL: https://liopeer.github.io/mlblog/
 languageCode: en-us
 title: Lio's MLBlog
+googleAnalytics: G-E6CT1JPDYZ
 theme: ["hugo-notice","PaperMod"]
 markup:
   goldmark:
