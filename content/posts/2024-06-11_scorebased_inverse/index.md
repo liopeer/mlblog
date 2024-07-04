@@ -2,7 +2,7 @@
 title = 'Diffusion Models for Linear Inverse Problems'
 author = 'Lionel Peer'
 date = 2024-06-11T09:55:33+02:00
-draft = true
+draft = false
 +++
 In the fall of 2023 I worked on inverse problems in medical imaging with diffusion models (download the thesis PDF [here](https://github.com/liopeer/CVLThesis/blob/main/main.pdf)). This was part of a semester thesis at ETH Zurich and the problem at hand was the reconstruction of MRI (magnetic resonance imaging) acquistions from sparse k-space measurements. For those unfamiliar with how MRI works: Imagine a slice through the human body -- a pixelized image -- on which you now apply the 2D DFT (discrete Fourier transform) using the *spatial frequencies* $k$. This Fourier representation of the image is exactly what MRI acquires and we usually call it $k$-space, in reference to those spatial frequencies. Acquisition protocols in MRI usually sequentially sample vertical (or horizontal) lines in this k-space and only sampling a sparse subset of those lines has the potential to significantly speed-up acquisitions.
 ## Linear Forward Models
