@@ -2,7 +2,7 @@
 title = 'Diffusion Models'
 author = 'Lionel Peer'
 date = 2024-06-20T20:33:48+02:00
-draft = true
+draft = false
 +++
 ## Preliminaries
 All machine learning problems, that I can think of, can be formulated as learning a mapping
