@@ -24,9 +24,7 @@ params:
   ShowToc: true
   show_citation: true
   math: true
-  homeInfoParams:
-  Title: "Hey, I’m Lionel"
-  Content: "Aspiring ML Engineer"
+  social: true
 
   socialIcons:
     - name: "linkedin"
@@ -36,7 +34,7 @@ params:
 
   homeInfoParams:
     Title: "Hi, I'm Lionel"
-    Content: "Aspiring ML Engineer, taking you along on my journey."
+    Content: "Machine Learning Engineer @ [Lightly AI](https://www.lightly.ai/)"
 
 menu:
   main:
