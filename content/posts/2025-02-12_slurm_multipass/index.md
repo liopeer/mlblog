@@ -5,7 +5,7 @@ draft = true
 +++
 ## Installing Multipass
 ```bash
-sudo snap install multipass
+sudo snap install multipass # some comment
 ```
 also worth noting: `microk8s` for potentional kubeflow cluster
 
