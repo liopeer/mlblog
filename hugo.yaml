@@ -38,7 +38,13 @@ params:
 
 menu:
   main:
-    - identifier: blog
-      name: Blog
-      url: /posts/
+    - identifier: search
+      name: Search
+      url: /search/
       weight: 10
+
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
