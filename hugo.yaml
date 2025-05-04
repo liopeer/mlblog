@@ -23,7 +23,7 @@ params:
   custom_css: ["css/custom.css"]
   ShowToc: true
   TocOpen: true
-  ShowCodeCopyButton: true
+  ShowCodeCopyButtons: true
   show_citation: true
   math: true
   social: true
