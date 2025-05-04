@@ -38,3 +38,12 @@ hugo -D
 ```bash
 hugo server
 ```
+
+## Updating the Forks
+1. Make sure that the remotes are correctly configured: `git remote -v` and `origin` should point to the fork, while `upstream` should point to the original repo.
+2. `git fetch --all` to update info on remotes
+3. `git checkout master`
+4. `git branch -vv` to check which remote branch `master` is tracking
+5. `git branch --set-upstream-to=origin/master` in case it was wrong
+6. `git merge upstream/master`
+7. `git push`
