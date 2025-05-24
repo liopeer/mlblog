@@ -149,7 +149,11 @@ if __name__ == "__main__":
     parser.add_argument("--num-iter", type=int, default=10)
     args = parser.parse_args()
 
-    mp.spawn(train_dist, args=(args.world_size, args.num_iter), nprocs=args.world_size)
+    mp.spawn(
+        train_dist, 
+        args=(args.world_size, args.num_iter), 
+        nprocs=args.world_size
+    )
 
     print("Finished training!")
 ```
@@ -213,7 +217,11 @@ if __name__ == "__main__":
     parser.add_argument("--num-iter", type=int, default=10)
     args = parser.parse_args()
 
-    mp.spawn(train_dist, args=(args.world_size, args.num_iter), nprocs=args.world_size)
+    mp.spawn(
+        train_dist, 
+        args=(args.world_size, args.num_iter), 
+        nprocs=args.world_size
+    )
 
     print("Finished training!")
 ```
