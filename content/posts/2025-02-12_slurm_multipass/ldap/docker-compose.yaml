@@ -1,0 +1,17 @@
+services:
+  lldap:
+    image: lldap/lldap:stable
+    restart: always
+    environment:
+      LLDAP_JWT_SECRET: ke4G9d23MHCMuCJ
+      LLDAP_KEY_SEED: 631ip5724059nfui
+      LLDAP_LDAP_HOST: 0.0.0.0
+      LLDAP_HTTP_HOST: 0.0.0.0
+      LLDAP_LDAP_USER_DN: ldap_admin
+      LLDAP_LDAP_USER_PASS: 1234abcd
+      LLDAP_FORCE_LDAP_USER_PASS_RESET: false # set to true to force a password reset on first login
+    volumes:
+      - ~/lldap-data:/data
+    ports:
+      - "3890:3890"  # LDAP port
+      - "17170:17170"  # HTTP port

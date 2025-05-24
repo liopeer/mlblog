@@ -1,15 +1,15 @@
 +++
-title = 'Distributed Training in PyTorch'
+title = 'Distributed Training in PyTorch – I'
 date = 2025-05-04T15:09:46+02:00
-draft = true
+draft = false
 +++
-In this blog post I would like to showcase several methods on how you can train your machine learning model with PyTorch on several GPUs/CPUs across multiple nodes in a cluster. The tutorial will try to look a bit under the hood of how you can launch distributed jobs and how you can ensure proper communication between them and we will also look at popular frameworks such as PyTorch Lightning and resource schedulers like SLURM that can help you getting your distributed training running. We will strictly focus on data parallelism, meaning a parallelism where the whole model fits into the memory of a single GPU and we exchange gradients (and potentially batch norms) across the GPUs, while keeping the whole optimization local on each GPU.
+This blog post is the first in a series in which I would like to showcase several methods on how you can train your machine learning model with PyTorch on several GPUs/CPUs across multiple nodes in a cluster. In this first part we will try to look a bit under the hood of how you can launch distributed jobs and how you can ensure proper communication between them. In follow-ups we will create our own PyTorch `DistributedDataParallel` (DDP) class and we will also look at popular frameworks such as PyTorch Lightning and resource schedulers like SLURM that can help you getting your distributed training running. We will strictly focus on data parallelism, meaning a parallelism where the whole model fits into the memory of a single GPU and we exchange gradients (and potentially batch norms) across the GPUs, while keeping the whole optimization local on each GPU.
 
 {{< notice note >}}
 You don't need access to a compute cluster or multiple GPUs to follow along. We can simulate everything using our CPU and a single computer.
 {{< /notice >}}
 
-## Basics of Distributed PyTorch
+## Terminology of Distributed Training
 PyTorch offers communication between distributed processes through [`torch.distributed`](https://pytorch.org/docs/stable/distributed.html), which is a wrapper around other communication libraries, such as [Gloo](https://github.com/pytorch/gloo), [NCCL](https://github.com/NVIDIA/nccl) or [MPI](https://github.com/open-mpi/ompi). PyTorch recommends using Gloo when doing distributed training on CPUs and NCCL when using Nvidia GPUs, which is why we will be relying on Gloo over the course of this blog post.
 
 Let's harmonize some terms here, before we continue on how one can set up distributed data parallelism:
@@ -19,26 +19,17 @@ Let's harmonize some terms here, before we continue on how one can set up distri
 4. *Node Rank*: An integer between 0 and the total number of nodes, which uniquely identifies a node.
 5. *Local Rank*: The process number on a specific node, i.e. the modulus of the global rank with respect to the number of processes per node (local_rank = global_rank % processes_per_node, again assuming that all nodes have equal numbers of processes).
 
-### Let Processes "find" each other
+## Let Processes "find" each other
 Before processes can communicate, we first need to make sure they know of each other's existence and how they can address each other. The first contact for this is done through the [`torch.distributed.init_process_group` function](https://pytorch.org/docs/stable/distributed.html#torch.distributed.init_process_group). By default, this function assumes that the environment variables `MASTER_ADDR` (the IP of the master node) and `MASTER_PORT` (a free port on the master node) are set. That port on the master node, will then be used by all processes to join the process group. Besides setting environment variables, one could also use a TCP key/value store or a shared file to communicate these two parameters, however for this I refer the interested reader to the [PyTorch documentation](https://pytorch.org/docs/stable/distributed.html#initialization).
 
 The `init_process_group` will wait until all processes have joined (or until the `timeout` parameter has been reached), therefore it needs to know how many processes in total are expected and each process should communicate its rank (so that potential duplicates can raise errors).
 
 We can integrate all of this and create a super minimal script and launch it in (in 2 separate terminals) with the commands:
-```bash
-# first terminal
-MASTER_ADDR="localhost" MASTER_PORT="12355" python procgroup_join.py --rank=0 --world-size=2
-```
-
-```bash
-# second terminal
-MASTER_ADDR="localhost" MASTER_PORT="12355" python procgroup_join.py --rank=1 --world-size=2
-```
-
 ```python
-# procgroup_join.pypro
+# procgroup_join.py
 import os
 from argparse import ArgumentParser
+
 import torch.distributed as dist
 
 if __name__ == "__main__":
@@ -53,13 +44,22 @@ if __name__ == "__main__":
         world_size=args.world_size,
     )
 
-    print("All ranks have joined the process group!")
+    print(f"Rank {args.rank} has joined the process group!")
 
     dist.destroy_process_group()
 ```
+```bash
+# first terminal
+MASTER_ADDR="localhost" MASTER_PORT="12355" python procgroup_join.py --rank=0 --world-size=2
+```
+
+```bash
+# second terminal
+MASTER_ADDR="localhost" MASTER_PORT="12355" python procgroup_join.py --rank=1 --world-size=2
+```
 As you'll see, nothing will happen in the first terminal until you launch the command in the second terminal, since the rank 0 process has to wait at `dist.init_process_group` until all the expected processes have joined. Manually launching the processes from separate terminals is of course a bit cumbersome, that's why we will automate this in the next section.
 
-### Automated Process Spawning
+## Automated Process Spawning
 We can use the Python built-in [`multiprocessing`](https://docs.python.org/3/library/multiprocessing.html) or torch's own [`torch.multiprocessing`](https://pytorch.org/docs/stable/multiprocessing.html#spawning-subprocesses) modules to launch subprocesses from our script instead of having to use multiple terminal windows. `torch.multiprocessing` is simply a wrapper around `multiprocessing` with some PyTorch specific optimization and some additional functions like the `spawn` function that we will use here:
 
 ```python
@@ -96,13 +96,13 @@ python dist_mpspawn.py --world-size=8
 ```
 As you can see, we also don't need to pass the environment variables before the command since we set them already in the script.
 
-Much more convenient than opening 8 terminals, right?
+Much more convenient than opening 8 terminals, right? Unfortunately, `mp.spawn` does of course not scale to muliple nodes, so with the current script, you'd still have to manually launch the script on each node. Workload schedulers like [SLURM](https://slurm.schedmd.com/documentation.html) can help with this, but we will cover that in a later part of this series. For now, let's just assume that we run the script on a single node with multiple GPUs.
 
 {{< notice info >}}
 The `mp.spawn` function takes a function as the first argument (here `setup_dist`), which needs to have the rank as the first argument and all other arguments of that function (here `world_size`) can be passed through the `args` parameter as a tuple.
 {{< /notice >}}
 
-### Averaging Gradients Across Processes
+## Averaging Gradients Across Processes
 Now that we know how to initialize a process group, let's actually train a model on several processes and average the gradients over the processes. The averaging operation can be done using `torch.distributed.all_reduce`, which takes a tensor as input, averages each element of the tensor across the processes and returns the averaged tensor on every process.
 
 ```python
@@ -218,9 +218,5 @@ if __name__ == "__main__":
     print("Finished training!")
 ```
 
-Now that we know how we can average gradients, we will extend the idea in the next section to averaging batch normalization layers across processes and also properly distribute the dataset, such that every process takes care of only a subset of the data.
-
-### Custom DDP Implementation
-```python
-# custom_ddp.py
-```
+## Wrap Up
+In this first part of the series we have seen how we can set up a distributed process group in PyTorch and how we can average gradients across processes. We have also seen how to automate the spawning of processes using `torch.multiprocessing.spawn`. In the next part we will extend the idea of averaging gradients to batch normalization layers, how to distribute dataset sampling across processes and how to create our own `DistributedDataParallel` class.
