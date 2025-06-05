@@ -2,6 +2,7 @@
 title = 'Distributed Training in PyTorch – I'
 date = 2025-05-04T15:09:46+02:00
 draft = false
+author = 'Lionel Peer'
 +++
 This blog post is the first in a series in which I would like to showcase several methods on how you can train your machine learning model with PyTorch on several GPUs/CPUs across multiple nodes in a cluster. In this first part we will try to look a bit under the hood of how you can launch distributed jobs and how you can ensure proper communication between them. In follow-ups we will create our own PyTorch `DistributedDataParallel` (DDP) class and we will also look at popular frameworks such as PyTorch Lightning and resource schedulers like SLURM that can help you getting your distributed training running. We will strictly focus on data parallelism, meaning a parallelism where the whole model fits into the memory of a single GPU and we exchange gradients (and potentially batch norms) across the GPUs, while keeping the whole optimization local on each GPU.
 
