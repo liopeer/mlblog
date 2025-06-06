@@ -47,6 +47,10 @@ menu:
 
 outputs:
   home:
-    - HTML
-    - RSS
-    - JSON
+    - html
+    - rss
+    - json
+  
+  page:
+    - html
+    - markdown
