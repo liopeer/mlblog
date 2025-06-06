@@ -27,16 +27,23 @@ params:
   show_citation: true
   math: true
   social: true
+  ShowShareButtons: true
+  ShowReadingTime: true
+  ShowPostNavLinks: true
 
   socialIcons:
+    - name: "website"
+      url: "https://www.lionelpeer.ch"
     - name: "linkedin"
       url: "https://www.linkedin.com/in/lionel-peer"
     - name: "github"
       url: "https://github.com/liopeer/"
+    - name: "rss"
+      url: "https://mlblog.lionelpeer.ch/index.xml"
 
   homeInfoParams:
-    Title: "Hi, I'm Lionel"
-    Content: "Machine Learning Engineer @ [Lightly AI](https://www.lightly.ai/) & ETHZ Alumni"
+    Title: "👋 Hi, I'm Lionel"
+    Content: "Machine Learning Engineer @ [Lightly AI](https://www.lightly.ai/) & ETH Zurich Alumni"
 
 menu:
   main:
