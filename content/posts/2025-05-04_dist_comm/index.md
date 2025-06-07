@@ -159,58 +159,58 @@ if __name__ == "__main__":
     print("Finished training!")
 ```
 
-In above script we manually implemented the gradient descent step, which makes the code very complicated and very different from standard PyTorch code. This code would also not be easily compatible with other PyTorch optimizers, such as SGD with momentum or Adam. This can be avoided, by hooking the `all_reduce` operation into the model's backward pass through `Module`'s `register_full_backward_hook` method.
+In above script we manually implemented the gradient descent step, which makes the code very complicated and very different from standard PyTorch code. This code would also not be easily compatible with other PyTorch optimizers, such as SGD with momentum or Adam. This can be avoided, by hooking the `all_reduce` operation into the model's backward pass. This can be done through the `register_post_accumulate_grad_hook` that each of the parameters has. Additionally, to beautify a bit more, we can use a context manager to set up the process group and destroy it after training. This way we can also ensure that the process group is properly cleaned up even if an error occurs during training.
 
 ```python
 # dist_train_hooks.py
 import os
-from typing import Any
 from argparse import ArgumentParser
 import functools
+import contextlib
 
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
-from torch.nn import Linear, Sequential, Module
-from torch import autograd
+from torch.nn import Linear, Sequential
+from torch import Tensor
 from torch.distributed import ReduceOp
 from torch.optim import SGD
 
 MASTER_ADDR = "localhost"
 MASTER_PORT = "12355"
 
+@contextlib.contextmanager
+def setup_dist(rank: int, world_size: int):
+    try:
+        os.environ['MASTER_ADDR'] = MASTER_ADDR
+        os.environ['MASTER_PORT'] = MASTER_PORT
+        dist.init_process_group("gloo", rank=rank, world_size=world_size)
+        yield
+    finally:
+        dist.destroy_process_group()
 
-def setup_dist(rank: int, world_size: int) -> None:
-    os.environ['MASTER_ADDR'] = MASTER_ADDR
-    os.environ['MASTER_PORT'] = MASTER_PORT
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
-
-def grad_avg_hook(
-    world_size: int, module: Module, grad_input: Any, grad_output: Any
-) -> None:
-    # This hook will average the gradients across all processes
-    for param in module.parameters():
-        dist.all_reduce(param.grad.data, op=ReduceOp.SUM)
-        param.grad.data /= world_size
+def grad_avg_hook(world_size: int, param: Tensor) -> None:
+    dist.all_reduce(param.grad, op=ReduceOp.SUM)
+    param.grad /= world_size
 
 def train_dist(rank: int, world_size: int, num_iter: int) -> None:
     # Setup the process group.
-    setup_dist(rank, world_size)
+    with setup_dist(rank, world_size):
+        # Model initialization and training loop.
+        model = Sequential(Linear(10, 10), Linear(10, 10))
+        learning_rate = 0.001
+        optimizer = SGD(model.parameters(), lr=learning_rate)
+        hook = functools.partial(grad_avg_hook, world_size)
+        for param in model.parameters():
+            param.register_post_accumulate_grad_hook(hook)
 
-    # Model initialization and training loop.
-    model = Sequential(Linear(10, 10), Linear(10, 10))
-    hook = functools.partial(grad_avg_hook, world_size)
-    model.register_full_backward_hook(hook)
-    learning_rate = 0.001
-    optimizer = SGD(model.parameters(), lr=learning_rate)
-
-    for _ in range(num_iter):
-        loss = model(torch.randn(10)).sum()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    dist.destroy_process_group()
+        for i in range(num_iter):
+            if rank == 0:
+                print(f"Iteration {i+1}/{num_iter}")
+            optimizer.zero_grad()
+            loss = model(torch.rand(10)).sum()
+            loss.backward()
+            optimizer.step()
 
 if __name__ == "__main__":
     parser = ArgumentParser()
