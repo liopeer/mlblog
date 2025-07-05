@@ -1,15 +1,3 @@
-+++
-title = 'FSDP vs. DDP'
-date = 2025-07-01T20:48:33+02:00
-draft = true
-author = 'Lionel Peer'
-+++
-
-## PyTorch Fully-Sharded Data Parallelism (FSDP)
-Whenever your model, together with its gradients and optimizer states, does not fit into the memory of a single GPU or you would have to use prohibitively small batch sizes, we need to split. Over the years, several methods of splitting the model have been developed, however, the most common and most efficient approach is Fully-Sharded Data Parallelism (FSDP). FSDP splits all parameters (usually along the first dimension) and distributes them across the available GPUs. Since moving data between GPUs is much less expensive than moving data between the CPU and GPU, this approach is relatively efficient.
-
-### Comparing DDP and FSDP
-```python
 import os
 import contextlib
 
@@ -19,6 +7,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 import torch.distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.nn import Linear
 from torch.distributed.fsdp.wrap import ModuleWrapPolicy
@@ -43,8 +32,8 @@ def setup_dist(rank: int, world_size: int):
     finally:
         dist.destroy_process_group()
 
-def main(rank: int, world_size: int, fsdp: bool):
-    param_size = 16384
+def main(rank: int, world_size: int, fsdp2: bool):
+    param_size = 8192
     num_layers = 5
     with setup_dist(rank, world_size):
         device = torch.device(f"cuda:{rank}")
@@ -57,18 +46,19 @@ def main(rank: int, world_size: int, fsdp: bool):
             hidden_size=param_size, 
             num_layers=num_layers,
         )
-        if fsdp:
+        if not fsdp2:
             model = FSDP(
                 model,
                 auto_wrap_policy=ModuleWrapPolicy({Linear}),
                 device_id=device,
             )
         else:
-            model = DDP(
-                model.to(device),
-            )
+            for _, module in model.named_modules():
+                if isinstance(module, Linear):
+                    fully_shard(module)
+            fully_shard(model)
 
-        optimizer = Adam(model.parameters(), lr=1e-5)
+        optimizer = Adam(model.parameters(), lr=1e-3)
 
         y = torch.randn(256, param_size).to(rank)
         x = torch.randn(256, param_size).to(rank)
@@ -93,4 +83,3 @@ if __name__ == "__main__":
 
     world_size = 4
     mp.spawn(main, args=(world_size, args.fsdp), nprocs=world_size)
-```
