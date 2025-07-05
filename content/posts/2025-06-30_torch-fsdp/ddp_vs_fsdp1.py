@@ -61,7 +61,7 @@ def main(rank: int, world_size: int, fsdp: bool):
         y = torch.randn(256, param_size).to(rank)
         x = torch.randn(256, param_size).to(rank)
 
-        for i in range(5):
+        for i in range(10):
             optimizer.zero_grad()
             y_hat = model(x)
             loss = F.mse_loss(y_hat, y)
@@ -74,10 +74,18 @@ def main(rank: int, world_size: int, fsdp: bool):
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+    import time
 
     parser = ArgumentParser()
-    parser.add_argument('--fsdp', action='store_true', help='Use FSDP instead of DDP')
+    parser.add_argument("--num-devices", type=int, default=2, help="Number of devices to use")
     args = parser.parse_args()
 
-    world_size = 4
-    mp.spawn(main, args=(world_size, args.fsdp), nprocs=world_size)
+    print("Running DDP ...")
+    time_start = time.time()
+    mp.spawn(main, args=(args.num_devices, False), nprocs=args.num_devices)
+    print(f"DDP execution time: {time.time() - time_start:.2f} seconds")
+
+    print("Running FSDP ...")
+    time_start = time.time()
+    mp.spawn(main, args=(args.num_devices, True), nprocs=args.num_devices)
+    print(f"FSDP execution time: {time.time() - time_start:.2f} seconds")
