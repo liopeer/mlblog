@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 import lightning as L
+from lightning.pytorch.accelerators.cuda import CUDAAccelerator
 
 from linear_model import LinearLightningModel
 
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset, batch_size=256)
     
     model = LinearLightningModel(input_size=param_size, output_size=param_size)
-    trainer = L.Trainer(max_epochs=5, devices=4, strategy="ddp")
+    trainer = L.Trainer(max_epochs=5, devices=4, strategy="fsdp", accelerator=CUDAAccelerator())
     trainer.fit(model, dataloader)
 
     # Use trainer's global rank instead of model.rank
