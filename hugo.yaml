@@ -1,4 +1,4 @@
-baseURL: https://mlblog.lionelpeer.ch
+baseURL: https://mlblog.lionelpeer.ch/
 languageCode: en-us
 title: Lio's MLBlog
 googleAnalytics: G-E6CT1JPDYZ
@@ -27,7 +27,6 @@ params:
   show_citation: true
   math: true
   social: true
-  ShowShareButtons: true
   ShowReadingTime: true
   ShowPostNavLinks: true
 
