@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 import torch.distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.nn import Linear
 from torch.distributed.fsdp.wrap import ModuleWrapPolicy
@@ -31,7 +32,10 @@ def setup_dist(rank: int, world_size: int):
     finally:
         dist.destroy_process_group()
 
-def main(rank: int, world_size: int, fsdp: bool):
+def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
+
+    assert not (fsdp1 and fsdp2), "Only one FSDP mode can be enabled at a time."
+
     param_size = 8192
     num_layers = 5
     with setup_dist(rank, world_size):
@@ -45,12 +49,17 @@ def main(rank: int, world_size: int, fsdp: bool):
             hidden_size=param_size, 
             num_layers=num_layers,
         )
-        if fsdp:
+        if fsdp1:
             model = FSDP(
                 model,
                 auto_wrap_policy=ModuleWrapPolicy({Linear}),
                 device_id=device,
             )
+        elif fsdp2:
+            for module in model.modules():
+                if isinstance(module, Linear):
+                    fully_shard(module)
+            model = fully_shard(model.to(device))
         else:
             model = DDP(
                 model.to(device),
@@ -77,15 +86,20 @@ if __name__ == "__main__":
     import time
 
     parser = ArgumentParser()
-    parser.add_argument("--num-devices", type=int, default=2, help="Number of devices to use")
+    parser.add_argument("--num-devices", type=int, default=4, help="Number of devices to use")
     args = parser.parse_args()
 
     print("Running DDP ...")
     time_start = time.time()
-    mp.spawn(main, args=(args.num_devices, False), nprocs=args.num_devices)
-    print(f"DDP execution time: {time.time() - time_start:.2f} seconds")
+    mp.spawn(main, args=(args.num_devices, False, False), nprocs=args.num_devices)
+    print(f"DDP execution time: {time.time() - time_start:.2f} seconds\n\n")
 
-    print("Running FSDP ...")
+    print("Running FSDP1 ...")
     time_start = time.time()
-    mp.spawn(main, args=(args.num_devices, True), nprocs=args.num_devices)
-    print(f"FSDP execution time: {time.time() - time_start:.2f} seconds")
+    mp.spawn(main, args=(args.num_devices, True, False), nprocs=args.num_devices)
+    print(f"FSDP execution time: {time.time() - time_start:.2f} seconds\n\n")
+
+    print("Running FSDP2 ...")
+    time_start = time.time()
+    mp.spawn(main, args=(args.num_devices, False, True), nprocs=args.num_devices)
+    print(f"FSDP execution time: {time.time() - time_start:.2f} seconds\n\n")

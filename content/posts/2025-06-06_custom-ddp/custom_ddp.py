@@ -13,11 +13,10 @@ from torch.distributed import ReduceOp
 import torch.multiprocessing as mp
 from torch.optim import SGD
 from torchvision.datasets import FashionMNIST
-from torch.utils.data import DataLoader, Dataset, DistributedSampler
+from torch.utils.data import DataLoader, Dataset
 import torch.nn.functional as F
 from torchvision.transforms import ToTensor, Grayscale, Compose
 from torchvision import models
-from torch.nn.parallel import DistributedDataParallel as DDP
 
 MASTER_ADDR = "localhost"
 MASTER_PORT = "12355"
@@ -88,7 +87,7 @@ def train_dist(
     # Setup the process group.
     with setup_dist(rank, world_size):
         # Model initialization and training loop.
-        model = DDP(
+        model = CustomDDP(
             SyncBatchNorm.convert_sync_batchnorm(
                 models.resnet18(num_classes=10).to(rank)
             ),
