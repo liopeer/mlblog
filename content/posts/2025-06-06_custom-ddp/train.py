@@ -42,10 +42,7 @@ def get_dataloaders(batch_size: int) -> tuple[DataLoader, DataLoader]:
 def train_dist(rank: int, world_size: int, num_iter: int = 10):
     with custom_ddp.setup_dist(rank, world_size):
         print(f"Rank {rank} is training...")
-        model = CustomDDP(
-            module=models.resnet18(num_classes=10),
-            world_size=world_size
-        )
+        model = CustomDDP(module=models.resnet18(num_classes=10))
         train_load, test_loader = get_dataloaders(batch_size=32)
         criterion = CrossEntropyLoss()
         optimizer = Adam(model.parameters(), lr=0.001)
