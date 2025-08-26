@@ -7,24 +7,24 @@ author = 'Lionel Peer'
 In the [part I of this series]({{< relref "/posts/2025-05-04_dist_comm" >}}), we saw how we could
 - launch different processes with `mp.spawn` or through multiple terminal windows
 - group processes in process groups for communication and synchronization
-- implement a distributed trraining loop by manually sychronizing gradients or by hooking them into the backward pass
+- implement a distributed training loop by manually synchronizing gradients or by hooking them into the backward pass
 
-In this part, we will now follow up on this and implement our own simplified version of `DistributedDataParallel` (DDP) and other helpers for distributed training. This will allow us to better structure our code and abstract away some of the boilerplate code that we had to use inside the training loop.
+In this part, we will now follow up on this and implement our own simplified version of `DistributedDataParallel` (DDP) and other helpers for distributed training – particularly distributed sampling of data and synchronization of batch norms. This will allow us to better structure our code and abstract away some of the boilerplate code that we had to use inside the training loop. We will then verify the correctness of our implementation by training a ResNet18[^1] on the FashionMNIST[^2] dataset and comparing the results to the original `DistributedDataParallel` implementation. Additionally, we will also finally touch the topic of multi-node training.
 
 ## Our own DDP
 You can find the documentation of the original class here: [`DistributedDataParallel`](https://docs.pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html). We will implement a significantly simplified version of it, but the main ideas will be the same.
 
-We start by creating the class and hooking the gradient synchronization into the backward pass. Additionally, we also copy over our context manager from the previous part that sets up and destroys the process group.
+We can start by copying over our context manager from the previous part that sets up and destroys the process group.
 
 ```python
-# custom_ddp.py
-import torch
-from torch.nn import Module
+import os
+import contextlib
+
 import torch.distributed as dist
 
 MASTER_ADDR = "localhost"
 MASTER_PORT = "12355"
-DIST_BACKEND = "nccl" if torch.cuda.is_available() else "gloo"
+DIST_BACKEND = "nccl"
 
 @contextlib.contextmanager
 def setup_dist(rank: int, world_size: int):
@@ -35,105 +35,47 @@ def setup_dist(rank: int, world_size: int):
         yield
     finally:
         dist.destroy_process_group()
-
-class CustomDDP(Module):
-    def __init__(self, module):
-        super().__init__()
-        self.module = module
-        hook = functools.partial(grad_avg_hook, world_size)
-        for param in self.module.parameters():
-            param.register_post_accumulate_grad_hook(hook)
-
-    def forward(self, *inputs, **kwargs):
-        return self.module(*inputs, **kwargs)
-
-    def state_dict(self, *args, **kwargs):
-        """Override state_dict to ensure that we only return the state of the module."""
-        return self.module.state_dict(*args, **kwargs)
-
-def grad_avg_hook(world_size: int, param: Tensor) -> None:
-    dist.all_reduce(param.grad, op=ReduceOp.SUM)
-    param.grad /= world_size
 ```
 
-In the previous post we used a dummy loop that did not do any training. Let's now try to train a proper neural network with our custom DDP. Specifically, we will train a ResNet18 on the FashionMNIST dataset.
+Since we plan on actually training a model this time, we will use the `"nccl"` backend, which is optimized for GPUs. If you don't have multiple GPUs available, you can also use the `"gloo"` backend like we did in the previous part.
+
+Next, we can start implementing our `DistributedDataParallel` class. This class will simply wrap an existing `nn.Module` and take care of synchronizing gradients. Other than that, we want this wrapper to be really lightweight and behave as closesly as possible to the original module, which is why we will simply propagate the `forward` method and the `state_dict` method of the wrapped module. Since we are using the `"nccl"` backend, we can use the `ReduceOp.AVG` operation. This makes the code a bit simpler, since we do not need to explicitly pass the world size to the gradient averaging hook. The hook will simply average the gradients across all processes. If you want to use the `"gloo"` backend, you can use `functools.partial` and pass the world size to the `CustomDDP` constructor – the previous post already showed how to do this.
 
 ```python
-# train.py
-from argparse import ArgumentParser
+from torch.nn import Module
+from torch import Tensor
+import torch.distributed as dist
+from torch.distributed import ReduceOp
 
-from torchvision.datasets import FashionMNIST
-from torchvision import models
-from torchvision.transforms import ToTensor
-from torch.utils.data import DataLoader
-from torch.nn import CrossEntropyLoss
-from torch.optim import Adam
-import torch.multiprocessing as mp
+class CustomDDP(Module):
+    def __init__(self, module: Module):
+        super().__init__()
+        self.module = module
+        for param in self.module.parameters():
+            param.register_post_accumulate_grad_hook(grad_avg_hook)
+            dist.broadcast(param.data, src=0)
 
-def get_dataloaders(batch_size: int) -> tuple[DataLoader, DataLoader]:
-    train_dataset = FashionMNIST(
-        root="./data", 
-        train=True, 
-        download=True, 
-        transform=ToTensor()
-    )
-    test_dataset = FashionMNIST(
-        root="./data", 
-        train=False, 
-        download=True, 
-        transform=ToTensor()
-    )
-    train_loader = DataLoader(
-        train_dataset, 
-        batch_size=batch_size, 
-        shuffle=True
-    )
-    test_loader = DataLoader(
-        test_dataset, 
-        batch_size=batch_size, 
-        shuffle=False
-    )
-    
-    return train_loader, test_loader
+    def forward(self, *args, **kwargs):
+        return self.module(*args, **kwargs)
 
-def train_dist(rank: int, world_size: int, num_iter: int = 10):
-    with setup_dist(rank, world_size):
-        model = CustomDDP(
-            models.resnet18(num_classes=10).to(rank)
-        )
-        train_load, test_loader = get_dataloaders(batch_size=32)
-        criterion = CrossEntropyLoss()
-        optimizer = Adam(model.parameters(), lr=0.001)
+    def state_dict(self, *args, **kwargs):
+        """Make the state_dict compatible with the unwrapped module."""
+        return self.module.state_dict(*args, **kwargs)
 
-        for epoch in range(num_iter):
-            model.train()
-            for batch_idx, (data, target) in enumerate(train_load):
-                data, target = data.to(rank), target.to(rank)
-                optimizer.zero_grad()
-                output = model(data)
-                loss = criterion(output, target)
-                loss.backward()
-                optimizer.step()
+    def load_state_dict(self, *args, **kwargs):
+        return self.module.load_state_dict(*args, **kwargs)
 
-            model.eval()
-            with torch.no_grad():
-                for data, target in test_loader:
-                    data, target = data.to(rank), target.to(rank)
-                    output = model(data)
-                    test_loss = criterion(output, target)
-                    print(f"Rank {rank}, Epoch {epoch}, Test Loss: {test_loss.item()}")
-
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("--world-size", type=int, required=True)
-    parser.add_argument("--num-iter", type=int, default=10)
-    args = parser.parse_args()
-
-    mp.spawn(
-        train_dist, 
-        args=(args.world_size, args.num_iter), 
-        nprocs=args.world_size
-    )
-
-    print("Finished training!")
+def grad_avg_hook(param: Tensor) -> None:
+    dist.all_reduce(param.grad, op=ReduceOp.AVG)
 ```
+
+## Distributing the Samples across the Ranks
+
+The next thing we have to take care of is the distributed sampling of the dataset. If we just use our regular dataloader on all ranks, we will end up with each rank processing all the data, which is not what we want – we want each rank to only process a subset of the data, since this is what will speed up our training.
+
+```python
+class CustomDistSampler:
+```
+
+[^1]: He, Kaiming, et al. "Deep residual learning for image recognition." Proceedings of the IEEE conference on computer vision and pattern recognition. 2016.
+[^2]: Xiao, Han, Kashif Rasul, and Roland Vollgraf. "Fashion-mnist: a novel image dataset for benchmarking machine learning algorithms." arXiv preprint arXiv:1708.07747 (2017).
