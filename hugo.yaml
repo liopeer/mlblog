@@ -1,0 +1,62 @@
+baseURL: https://mlblog.lionelpeer.ch/
+languageCode: en-us
+title: Lio's MLBlog
+googleAnalytics: G-E6CT1JPDYZ
+theme: ["hugo-notice","PaperMod"]
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+    extensions:
+      passthrough:
+        delimiters:
+          block:
+          - - \[
+            - \]
+          - - $$
+            - $$
+          inline:
+          - - \(
+            - \)
+        enable: true
+params:
+  custom_css: ["css/custom.css"]
+  ShowToc: true
+  TocOpen: true
+  ShowCodeCopyButtons: true
+  show_citation: true
+  math: true
+  social: true
+  ShowReadingTime: true
+  ShowPostNavLinks: true
+
+  socialIcons:
+    - name: "website"
+      url: "https://www.lionelpeer.ch"
+    - name: "linkedin"
+      url: "https://www.linkedin.com/in/lionel-peer"
+    - name: "github"
+      url: "https://github.com/liopeer/"
+    - name: "rss"
+      url: "https://mlblog.lionelpeer.ch/index.xml"
+
+  homeInfoParams:
+    Title: "👋 Hi, I'm Lionel"
+    Content: "Machine Learning Engineer @ [Lightly AI](https://www.lightly.ai/) & ETH Zurich Alumni"
+
+menu:
+  main:
+    - identifier: search
+      name: Search
+      url: /search/
+      weight: 10
+
+outputs:
+  home:
+    - html
+    - rss
+    - json
+  
+  page:
+    - html
+    - markdown

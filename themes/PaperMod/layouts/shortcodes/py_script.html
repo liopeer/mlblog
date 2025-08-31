@@ -1,0 +1,12 @@
+{{ $script := .Get "script" }}
+{{ with .Page.Resources.GetMatch $script }}
+<a href="{{.RelPermalink}}" class="button" download="{{ $script }}">
+    <button>⬇️ Download <code>{{ $script }}</code></button>
+</a>
+{{ end }}
+{{ $path := path.Join .Page.File.Dir $script }}
+{{ $content := $path | readFile }}
+```python
+# {{ $script }}
+{{ $content | safeHTML }}
+```
