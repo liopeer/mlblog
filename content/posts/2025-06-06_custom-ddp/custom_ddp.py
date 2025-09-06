@@ -6,7 +6,7 @@ import time
 
 import torch
 from torch import Tensor, Generator
-from torch.nn import Module, BatchNorm1d, BatchNorm2d, BatchNorm3d, Parameter
+from torch.nn import Module, SyncBatchNorm
 import torch.distributed as dist
 from torch.distributed import ReduceOp
 import torch.multiprocessing as mp
@@ -18,10 +18,9 @@ from torchvision.transforms import ToTensor, Grayscale, Compose
 from torchvision import models
 
 
-CUDA_AVAILABLE = torch.cuda.is_available()
 MASTER_ADDR = "localhost"
 MASTER_PORT = "12355"
-DIST_BACKEND = "nccl" if CUDA_AVAILABLE else "gloo"
+DIST_BACKEND = "nccl"
 
 
 @contextlib.contextmanager
@@ -54,11 +53,7 @@ class CustomDDP(Module):
 
 
 def grad_avg_hook(param: Tensor) -> None:
-    if CUDA_AVAILABLE:
-        dist.all_reduce(param.grad, op=ReduceOp.AVG)
-    else:
-        dist.all_reduce(param.grad, op=ReduceOp.SUM)
-        param.grad /= dist.get_world_size()
+    dist.all_reduce(param.grad, op=ReduceOp.AVG)
 
 
 class CustomDistSampler:
@@ -79,54 +74,13 @@ class CustomDistSampler:
         else:
             gen = Generator()
             gen.manual_seed(self.seed + self.epoch)
-            indices = torch.randperm(len(self.dataset), generator=gen)[rank::world_size]
-            yield from iter(indices.tolist())
+            indices_ = torch.randperm(len(self.dataset), generator=gen)[
+                rank::world_size
+            ]
+            yield from iter(indices_.tolist())
 
     def __len__(self):
         return self.num_samples
-    
-
-class CustomSyncBatchNorm(Module):
-    def __init__(self, module: BatchNorm1d | BatchNorm2d | BatchNorm3d):
-        super().__init__()
-        self.module = module
-
-    def forward(self, x: Tensor) -> Tensor:
-        if self.module.training:
-            reduce_dims = [0] + list(range(2, x.dim()))
-            local_sum = x.sum(dim=reduce_dims)
-            local_sq_sum = (x * x).sum(dim=reduce_dims)
-
-            dist.all_reduce(local_sum, op=ReduceOp.SUM)
-            dist.all_reduce(local_sq_sum, op=ReduceOp.SUM)
-
-            count = x.numel() / x.size(1)
-
-            mean = local_sum / count
-            var = local_sq_sum / count - mean * mean
-            
-            self.module.running_var = (1 - self.module.momentum) * \
-                self.module.running_var + self.module.momentum * var
-
-            self.module.running_mean.mul_(1 - self.module.momentum).add_(mean * self.module.momentum)
-            self.module.running_var.mul_(1 - self.module.momentum).add_(var * self.module.momentum)
-            self.module.num_batches_tracked += 1
-        else:
-            mean = self.module.running_mean
-            var = self.module.running_var
-
-        x = (x - mean[None, :, *(None,) * (x.dim() - 2)]) / torch.sqrt(var[None, :, *(None,) * (x.dim() - 2)] + self.module.eps)
-        if self.module.affine:
-            x = x * self.module.weight[None, :, *(None,) * (x.dim() - 2)] + self.module.bias[None, :, *(None,) * (x.dim() - 2)]
-        return x
-
-    @classmethod
-    def convert_sync_batchnorm(cls, module: Module) -> Module:
-        if isinstance(module, (BatchNorm1d, BatchNorm2d, BatchNorm3d)):
-            return cls(module)
-        for name, child in module.named_children():
-            module.add_module(name, cls.convert_sync_batchnorm(child))
-        return module
 
 
 def train_dist(
@@ -135,10 +89,11 @@ def train_dist(
     # Setup the process group.
     with setup_dist(rank, world_size):
         # Model initialization and training loop.
-        model = models.resnet18(num_classes=10)
-        if CUDA_AVAILABLE:
-            model = model.to(rank)
-        model = CustomDDP(model)
+        model = CustomDDP(
+            SyncBatchNorm.convert_sync_batchnorm(
+                models.resnet18(num_classes=10).to(rank)
+            )
+        )
         learning_rate = 0.001
         optimizer = SGD(model.parameters(), lr=learning_rate)
 
@@ -176,8 +131,7 @@ def train_dist(
         for epoch in range(num_epochs):
             epoch_train_losses = []
             for inputs, targets in train_loader:
-                if CUDA_AVAILABLE:
-                    inputs, targets = inputs.to(rank), targets.to(rank)
+                inputs, targets = inputs.to(rank), targets.to(rank)
 
                 # Forward pass.
                 outputs = model(inputs)
@@ -208,6 +162,9 @@ def train_dist(
             dist.all_reduce(epoch_train_loss, op=ReduceOp.AVG)
             dist.all_reduce(epoch_val_loss, op=ReduceOp.AVG)
 
+            train_sampler.epoch += 1
+            val_sampler.epoch += 1
+
             # Print loss for the current iteration.
             if rank == 0:
                 print(
@@ -220,11 +177,10 @@ def train_dist(
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--world-size", type=int, required=True)
-    parser.add_argument("--batch-size", type=int, default=1024)
+    parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--num-epochs", type=int, default=10)
     parser.add_argument("--num-workers", type=int, default=4)
     args = parser.parse_args()
-    torch.manual_seed(0)
 
     start_time = time.time()
     mp.spawn(
