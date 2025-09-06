@@ -1,7 +1,7 @@
 +++
 title = 'Distributed Training in PyTorch - II'
-date = 2025-06-06T20:48:33+02:00
-draft = true
+date = 2025-09-05T20:48:33+02:00
+draft = false
 author = 'Lionel Peer'
 +++
 In the [part I of this series]({{< relref "/posts/2025-05-04_dist_comm" >}}), we saw how we could
@@ -162,7 +162,7 @@ Iteration 9/10  Train Loss: 0.2005      Val Loss: 0.3121
 Iteration 10/10 Train Loss: 0.1881      Val Loss: 0.3189
 ```
 
-{{% py_script_download script="test_custom_ddp.py" %}}
+{{% py_script_downloadonly script="test_custom_ddp.py" %}}
 
 [^1]: He, Kaiming, et al. "Deep residual learning for image recognition." Proceedings of the IEEE conference on computer vision and pattern recognition. 2016.
 [^2]: Xiao, Han, Kashif Rasul, and Roland Vollgraf. "Fashion-mnist: a novel image dataset for benchmarking machine learning algorithms." arXiv preprint arXiv:1708.07747 (2017).
