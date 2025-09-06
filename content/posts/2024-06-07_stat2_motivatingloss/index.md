@@ -2,7 +2,7 @@
 title = 'Statistical Inference 2 - Motivating the commonly used Loss Functions'
 author = 'Lionel Peer'
 date = 2024-06-06T19:37:42+02:00
-draft = false
+draft = true
 +++
 {{< notice warning >}}
 Not 100% complete yet!
