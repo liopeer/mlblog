@@ -1,4 +1,3 @@
-# custom_ddp.py
 import os
 import contextlib
 from argparse import ArgumentParser
@@ -17,6 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 import torch.nn.functional as F
 from torchvision.transforms import ToTensor, Grayscale, Compose
 from torchvision import models
+
 
 MASTER_ADDR = "localhost"
 MASTER_PORT = "12355"
@@ -46,11 +46,11 @@ class CustomDDP(Module):
         return self.module(*args, **kwargs)
 
     def state_dict(self, *args, **kwargs):
-        """Make the state_dict compatible with the unwrapped module."""
         return self.module.state_dict(*args, **kwargs)
 
     def load_state_dict(self, *args, **kwargs):
         return self.module.load_state_dict(*args, **kwargs)
+
 
 def grad_avg_hook(param: Tensor) -> None:
     dist.all_reduce(param.grad, op=ReduceOp.AVG)
@@ -74,8 +74,10 @@ class CustomDistSampler:
         else:
             gen = Generator()
             gen.manual_seed(self.seed + self.epoch)
-            indices = torch.randperm(len(self.dataset), generator=gen)[rank::world_size]
-            yield from iter(indices.tolist())
+            indices_ = torch.randperm(len(self.dataset), generator=gen)[
+                rank::world_size
+            ]
+            yield from iter(indices_.tolist())
 
     def __len__(self):
         return self.num_samples
@@ -90,7 +92,7 @@ def train_dist(
         model = CustomDDP(
             SyncBatchNorm.convert_sync_batchnorm(
                 models.resnet18(num_classes=10).to(rank)
-            ),
+            )
         )
         learning_rate = 0.001
         optimizer = SGD(model.parameters(), lr=learning_rate)
@@ -160,6 +162,9 @@ def train_dist(
             dist.all_reduce(epoch_train_loss, op=ReduceOp.AVG)
             dist.all_reduce(epoch_val_loss, op=ReduceOp.AVG)
 
+            train_sampler.epoch += 1
+            val_sampler.epoch += 1
+
             # Print loss for the current iteration.
             if rank == 0:
                 print(
@@ -172,11 +177,10 @@ def train_dist(
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--world-size", type=int, required=True)
-    parser.add_argument("--batch-size", type=int, default=1024)
+    parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--num-epochs", type=int, default=10)
     parser.add_argument("--num-workers", type=int, default=4)
     args = parser.parse_args()
-    torch.manual_seed(0)
 
     start_time = time.time()
     mp.spawn(

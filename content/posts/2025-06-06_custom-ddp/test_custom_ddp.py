@@ -1,42 +1,23 @@
-# custom_ddp.py
-from argparse import ArgumentParser
-from typing import Iterator
-import time
-
-import torch
-from torch import Generator
 from torch.optim import SGD
 from torchvision.datasets import FashionMNIST
-from torch.utils.data import DataLoader, Dataset
-import torch.nn.functional as F
+from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor, Grayscale, Compose
 from torchvision import models
-
-
-class CustomSampler:
-    def __init__(self, dataset: Dataset, shuffle: bool = True, seed: int = 0):
-        self.dataset = dataset
-        self.shuffle = shuffle
-        self.seed = seed
-        self.epoch = 0
-
-    def __iter__(self) -> Iterator[int]:
-        if not self.shuffle:
-            yield from iter(range(len(self.dataset)))
-        else:
-            gen = Generator()
-            gen.manual_seed(self.seed + self.epoch)
-            indices = torch.randperm(len(self.dataset), generator=gen)
-            yield from iter(indices.tolist())
-
-    def __len__(self):
-        return len(self.dataset)
+import torch
+from custom_ddp import train_dist
+import torch.nn.functional as F
+import random
+import numpy as np
+from argparse import ArgumentParser
+import torch.multiprocessing as mp
+from torch.utils.data import Dataset
+from typing import Iterator
+from torch import Generator
 
 
 def train(num_epochs: int, batch_size: int, num_workers: int) -> None:
-    # Setup the process group.
     # Model initialization and training loop.
-    model = models.resnet18(num_classes=10).to("cuda")
+    model = models.resnet18(num_classes=10).to(0)
     learning_rate = 0.001
     optimizer = SGD(model.parameters(), lr=learning_rate)
 
@@ -47,13 +28,12 @@ def train(num_epochs: int, batch_size: int, num_workers: int) -> None:
         download=True,
         transform=Compose([Grayscale(num_output_channels=3), ToTensor()]),
     )
-    train_sampler = CustomSampler(train_set, shuffle=True)
     train_loader = DataLoader(
         train_set,
         batch_size=batch_size,
-        sampler=train_sampler,
         num_workers=num_workers,
         pin_memory=True,
+        shuffle=True,
     )
 
     val_set = FashionMNIST(
@@ -62,19 +42,18 @@ def train(num_epochs: int, batch_size: int, num_workers: int) -> None:
         download=True,
         transform=Compose([Grayscale(num_output_channels=3), ToTensor()]),
     )
-    val_sampler = CustomSampler(val_set, shuffle=False)
     val_loader = DataLoader(
         val_set,
         batch_size=batch_size,
-        sampler=val_sampler,
         num_workers=num_workers,
         pin_memory=True,
+        shuffle=False,
     )
 
     for epoch in range(num_epochs):
         epoch_train_losses = []
         for inputs, targets in train_loader:
-            inputs, targets = inputs.to("cuda"), targets.to("cuda")
+            inputs, targets = inputs.to(0), targets.to(0)
 
             # Forward pass.
             outputs = model(inputs)
@@ -89,15 +68,19 @@ def train(num_epochs: int, batch_size: int, num_workers: int) -> None:
         epoch_val_losses = []
         with torch.no_grad():
             for inputs, targets in val_loader:
-                inputs, targets = inputs.to("cuda"), targets.to("cuda")
+                inputs, targets = inputs.to(0), targets.to(0)
 
                 # Forward pass.
                 outputs = model(inputs)
                 loss = F.cross_entropy(outputs, targets)
                 epoch_val_losses += [loss.item()]
 
-        epoch_train_loss = sum(epoch_train_losses) / len(epoch_train_losses)
-        epoch_val_loss = sum(epoch_val_losses) / len(epoch_val_losses)
+        epoch_train_loss = torch.tensor(
+            sum(epoch_train_losses) / len(epoch_train_losses), device=0
+        )
+        epoch_val_loss = torch.tensor(
+            sum(epoch_val_losses) / len(epoch_val_losses), device=0
+        )
 
         # Print loss for the current iteration.
         print(
@@ -109,14 +92,24 @@ def train(num_epochs: int, batch_size: int, num_workers: int) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-epochs", type=int, default=10)
-    parser.add_argument("--batch-size", type=int, default=1024)
     parser.add_argument("--num-workers", type=int, default=4)
     args = parser.parse_args()
-    torch.manual_seed(0)
 
-    start_time = time.time()
+    print("Running distributed training with 2 GPUs...")
+    mp.spawn(
+        train_dist,
+        args=(2, args.num_epochs, args.batch_size, args.num_workers),
+        nprocs=2,
+    )
+
+    print("\nRunning distributed training with 4 GPUs...")
+    mp.spawn(
+        train_dist,
+        args=(4, args.num_epochs, args.batch_size, args.num_workers),
+        nprocs=4,
+    )
+
+    print("\nRunning single-GPU training...")
     train(args.num_epochs, args.batch_size, args.num_workers)
-    end_time = time.time()
-
-    print("Completed training in {:.2f} seconds.".format(end_time - start_time))
