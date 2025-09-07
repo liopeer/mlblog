@@ -55,6 +55,6 @@ $$
 \end{equation}
 $$
 {{< /notice >}}
-The [next post]({{< relref "../2024-06-07_stat2_motivatingloss/index.md" >}}) will continue from the MLE and MAP formulations and motivate the commonly used loss functions.
+In a follow up post, we will continue from the MLE and MAP formulations and motivate the commonly used loss functions.
 
 [^1]: B. O. Koopman. "On Distributions Admitting a Sufficient Statistic" in Transactions of the American Mathematical Society, vol. 39, no. 3, pp. 399–409, 1936.
