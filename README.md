@@ -92,7 +92,7 @@ brew install hugo
 ## ✍️ Creating New Content
 
 ```bash
-hugo new content/posts/YYYY-MM-DD_<post-name>/index.md
+hugo new content content/posts/YYYY-MM-DD_<post-name>/index.md
 ```
 
 ---
