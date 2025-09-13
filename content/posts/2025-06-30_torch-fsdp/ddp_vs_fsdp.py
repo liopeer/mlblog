@@ -17,23 +17,20 @@ from mlp import MLPModel
 MASTER_ADDR = "localhost"
 MASTER_PORT = "12355"
 
+
 @contextlib.contextmanager
 def setup_dist(rank: int, world_size: int):
     try:
-        os.environ['MASTER_ADDR'] = MASTER_ADDR
-        os.environ['MASTER_PORT'] = MASTER_PORT
-        dist.init_process_group(
-            backend="nccl", 
-            rank=rank, 
-            world_size=world_size
-        )
+        os.environ["MASTER_ADDR"] = MASTER_ADDR
+        os.environ["MASTER_PORT"] = MASTER_PORT
+        dist.init_process_group(backend="nccl", rank=rank, world_size=world_size)
         print(f"Rank {rank} joined the process group.")
         yield
     finally:
         dist.destroy_process_group()
 
-def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
 
+def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
     assert not (fsdp1 and fsdp2), "Only one FSDP mode can be enabled at a time."
 
     param_size = 8192
@@ -44,9 +41,9 @@ def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
         torch.cuda.set_device(rank)
 
         model = MLPModel(
-            input_size=param_size, 
-            output_size=param_size, 
-            hidden_size=param_size, 
+            input_size=param_size,
+            output_size=param_size,
+            hidden_size=param_size,
             num_layers=num_layers,
         )
         if fsdp1:
@@ -77,16 +74,21 @@ def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
             loss.backward()
             optimizer.step()
 
-            print(f"Epoch {i+1}, Loss: {loss.item():.4f}")
-        
-        print(f"Max memory allocated on rank {rank}: {torch.cuda.max_memory_allocated(device=rank) / (1024 ** 2):.2f} MB")
+            print(f"Epoch {i + 1}, Loss: {loss.item():.4f}")
+
+        print(
+            f"Max memory allocated on rank {rank}: {torch.cuda.max_memory_allocated(device=rank) / (1024**2):.2f} MB"
+        )
+
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
     import time
 
     parser = ArgumentParser()
-    parser.add_argument("--num-devices", type=int, default=4, help="Number of devices to use")
+    parser.add_argument(
+        "--num-devices", type=int, default=4, help="Number of devices to use"
+    )
     args = parser.parse_args()
 
     print("Running DDP ...")

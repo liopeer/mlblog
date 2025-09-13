@@ -13,9 +13,10 @@ MASTER_PORT = "12355"
 
 
 def setup_dist(rank: int, world_size: int) -> None:
-    os.environ['MASTER_ADDR'] = MASTER_ADDR
-    os.environ['MASTER_PORT'] = MASTER_PORT
+    os.environ["MASTER_ADDR"] = MASTER_ADDR
+    os.environ["MASTER_PORT"] = MASTER_PORT
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
+
 
 def train_dist(rank: int, world_size: int, num_iter: int) -> None:
     # Setup the process group.
@@ -34,16 +35,13 @@ def train_dist(rank: int, world_size: int, num_iter: int) -> None:
 
     dist.destroy_process_group()
 
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--world-size", type=int, required=True)
     parser.add_argument("--num-iter", type=int, default=10)
     args = parser.parse_args()
 
-    mp.spawn(
-        train_dist, 
-        args=(args.world_size, args.num_iter), 
-        nprocs=args.world_size
-    )
+    mp.spawn(train_dist, args=(args.world_size, args.num_iter), nprocs=args.world_size)
 
     print("Finished training!")

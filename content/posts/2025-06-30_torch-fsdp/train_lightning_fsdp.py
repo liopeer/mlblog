@@ -15,11 +15,15 @@ if __name__ == "__main__":
     y = torch.randn(256, param_size)
     dataset = TensorDataset(x, y)
     dataloader = DataLoader(dataset, batch_size=256)
-    
+
     model = LinearLightningModel(input_size=param_size, output_size=param_size)
-    trainer = L.Trainer(max_epochs=5, devices=4, strategy="fsdp", accelerator=CUDAAccelerator())
+    trainer = L.Trainer(
+        max_epochs=5, devices=4, strategy="fsdp", accelerator=CUDAAccelerator()
+    )
     trainer.fit(model, dataloader)
 
     # Use trainer's global rank instead of model.rank
     if trainer.is_global_zero:
-        print(f"Max memory allocated: {torch.cuda.max_memory_allocated() / (1024 ** 2):.2f} MB")
+        print(
+            f"Max memory allocated: {torch.cuda.max_memory_allocated() / (1024**2):.2f} MB"
+        )
