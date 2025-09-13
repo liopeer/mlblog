@@ -15,10 +15,11 @@ jobs:
       - name: Set up Julia
         uses: julia-actions/setup-julia@v1
         with:
-          version: '1.9'
+          version: '1.11'
 
       - name: Install JuliaFormatter
         run: julia -e 'using Pkg; Pkg.add("JuliaFormatter")'
 
       - name: Check formatting with JuliaFormatter
-        run: julia -e 'using JuliaFormatter; exit(format(".") ? 0 : 1)'
+        run: |
+          julia -e 'using JuliaFormatter; exit(format(".") ? 0 : 1)'
