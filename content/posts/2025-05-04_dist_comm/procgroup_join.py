@@ -10,8 +10,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dist.init_process_group(
-        backend="gloo", 
-        rank=args.rank, 
+        backend="gloo",
+        rank=args.rank,
         world_size=args.world_size,
     )
 

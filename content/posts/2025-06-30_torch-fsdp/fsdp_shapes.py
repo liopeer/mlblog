@@ -20,20 +20,16 @@ MASTER_PORT = "12355"
 @contextlib.contextmanager
 def setup_dist(rank: int, world_size: int):
     try:
-        os.environ['MASTER_ADDR'] = MASTER_ADDR
-        os.environ['MASTER_PORT'] = MASTER_PORT
-        dist.init_process_group(
-            backend="nccl", 
-            rank=rank, 
-            world_size=world_size
-        )
+        os.environ["MASTER_ADDR"] = MASTER_ADDR
+        os.environ["MASTER_PORT"] = MASTER_PORT
+        dist.init_process_group(backend="nccl", rank=rank, world_size=world_size)
         print(f"Rank {rank} joined the process group.")
         yield
     finally:
         dist.destroy_process_group()
 
-def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
 
+def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
     assert not (fsdp1 and fsdp2), "Only one FSDP mode can be enabled at a time."
 
     param_size = 8192
@@ -44,9 +40,9 @@ def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
         torch.cuda.set_device(rank)
 
         model = MLPModel(
-            input_size=param_size, 
-            output_size=param_size, 
-            hidden_size=param_size, 
+            input_size=param_size,
+            output_size=param_size,
+            hidden_size=param_size,
             num_layers=num_layers,
         )
         if fsdp1:
@@ -62,18 +58,29 @@ def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
             model = fully_shard(model.to(device))
         else:
             raise ValueError("Either fsdp1 or fsdp2 must be True.")
-        
+
         for layer in model.layers:
-            if not hasattr(layer, 'weight') or not hasattr(layer, 'bias'):
+            if not hasattr(layer, "weight") or not hasattr(layer, "bias"):
                 continue
             else:
                 try:
-                    print(f"Rank {rank} - Layer shapes before training: {layer._flat_param.shape}")
-                    assert layer._flat_param.shape[0] == (param_size*param_size + param_size) // world_size, "Flat param shape mismatch"
+                    print(
+                        f"Rank {rank} - Layer shapes before training: {layer._flat_param.shape}"
+                    )
+                    assert (
+                        layer._flat_param.shape[0]
+                        == (param_size * param_size + param_size) // world_size
+                    ), "Flat param shape mismatch"
                 except:
-                    assert isinstance(layer, FSDPModule), "Layer should be an FSDPModule"
-                    assert isinstance(layer.weight, torch.distributed.tensor.DTensor), f"Layer weight should be a distributed tensor, got {type(layer.weight)}"
-                    print(f"Rank {rank} - Layer shapes before training: {layer.weight._local_tensor.shape}, {layer.bias._local_tensor.shape}")
+                    assert isinstance(layer, FSDPModule), (
+                        "Layer should be an FSDPModule"
+                    )
+                    assert isinstance(layer.weight, torch.distributed.tensor.DTensor), (
+                        f"Layer weight should be a distributed tensor, got {type(layer.weight)}"
+                    )
+                    print(
+                        f"Rank {rank} - Layer shapes before training: {layer.weight._local_tensor.shape}, {layer.bias._local_tensor.shape}"
+                    )
 
         optimizer = Adam(model.parameters(), lr=1e-3)
 
@@ -87,12 +94,15 @@ def main(rank: int, world_size: int, fsdp1: bool, fsdp2: bool):
             loss.backward()
             optimizer.step()
 
+
 if __name__ == "__main__":
     from argparse import ArgumentParser
     import time
 
     parser = ArgumentParser()
-    parser.add_argument("--num-devices", type=int, default=4, help="Number of devices to use")
+    parser.add_argument(
+        "--num-devices", type=int, default=4, help="Number of devices to use"
+    )
     args = parser.parse_args()
 
     print("Running FSDP1 ...")
