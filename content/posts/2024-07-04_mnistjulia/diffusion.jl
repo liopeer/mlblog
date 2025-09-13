@@ -5,13 +5,13 @@ include("unet.jl")
 
 """Timestep Embedding."""
 struct TimeEmbed
-    emb::Array{Float32, 2}
+    emb::Array{Float32,2}
 end
 
 function TimeEmbed(timesteps::Integer, embed_dim::Integer)
     emb = zeros(embed_dim, timesteps)
-    for t in 1:timesteps
-        for dim in 1:div(embed_dim, 2)
+    for t = 1:timesteps
+        for dim = 1:div(embed_dim, 2)
             omega = 1 / (10000.0^(2*dim/embed_dim))
             emb[2*dim, t] = sin(t * omega)
             emb[2*dim-1, t] = cos(t * omega)
@@ -21,7 +21,7 @@ function TimeEmbed(timesteps::Integer, embed_dim::Integer)
 end
 
 function (emb::TimeEmbed)(t::Vector{<:Integer})
-    return emb.emb[:,t]
+    return emb.emb[:, t]
 end
 
 
@@ -51,16 +51,16 @@ function Diffusion(
     alphas_bar = cumprod(alphas)
 
     return Diffusion(
-        timesteps, 
-        betas, 
-        alphas, 
+        timesteps,
+        betas,
+        alphas,
         1 .- alphas,
         sqrt.(alphas),
-        alphas_bar, 
+        alphas_bar,
         1 .- alphas_bar,
         sqrt.(1 .- alphas_bar),
         unet,
-        t_emb
+        t_emb,
     )
 end
 @functor Diffusion
@@ -69,11 +69,7 @@ function add_img_dims(vec::Vector{<:Any})
     return reshape(vec, (1, 1, 1, size(vec)...))
 end
 
-function denoise_ddpm(
-    diffusion::Diffusion, 
-    x::Array{Float32, 4}, 
-    t::Array{Int64, 1}
-)
+function denoise_ddpm(diffusion::Diffusion, x::Array{Float32,4}, t::Array{Int64,1})
     sqrt_alphas = add_img_dims(diffusion.sqrt_alphas[t])
     one_minus_alphas = add_img_dims(diffusion.one_minus_alphas[t])
     sqrt_one_minus_alphas_bar = add_img_dims(diffusion.sqrt_one_minus_alphas_bar[t])
@@ -82,7 +78,9 @@ function denoise_ddpm(
     t = diffusion.t_emb(t)
     eps = diffusion.unet(x, t)
     noise = randn(size(eps)...)
-    @. x = 1 / sqrt_alphas * (x - one_minus_alphas / sqrt_one_minus_alphas_bar * eps) + sigmas * noise
+    @. x =
+        1 / sqrt_alphas * (x - one_minus_alphas / sqrt_one_minus_alphas_bar * eps) +
+        sigmas * noise
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
