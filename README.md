@@ -18,14 +18,33 @@ brew install hugo
 hugo new content content/posts/YYYY-MM-DD_<post-name>/index.md
 ```
 
-## Including Jupyter Notebooks
+## Including Source Files (Jupyter Notebooks & Python Scripts)
+
+### Jupyter Notebooks
+
 ```hugo
 {{% ipynb notebook="<notebook-name>.ipynb" %}}
 ```
-or for julia
+or for Julia:
 ```hugo
 {{% ipynb_julia notebook="<notebook-name>.ipynb" %}}
 ```
+
+### Python Scripts
+
+You can include Python scripts in your posts using custom shortcodes:
+
+- **Download only:**
+  ```hugo
+  {{< py_script_downloadonly script="myscript.py" >}}
+  ```
+
+- **Download and display inline:**
+  ```hugo
+  {{< py_script script="myscript.py" >}}
+  ```
+
+Make sure the script is added as a [Page Resource](https://gohugo.io/content-management/page-resources/) (e.g., placed in the same folder as your post's `index.md`).
 
 ## Building
 ```bash
