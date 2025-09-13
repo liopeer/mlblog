@@ -1,3 +1,5 @@
+# Lio's ML Blog
+A learning journal on machine learning, data science, and programming.
 ## Cloning & Pulling
 ```bash
 git clone --recurse-submodules https://github.com/liopeer/mlblog.git
